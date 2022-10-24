@@ -13,7 +13,6 @@ from time import sleep
 import json
 import sys
 from bs4 import BeautifulSoup
-from pandas.io.json import json_normalize
 import pandas as pd
 
 
@@ -31,13 +30,13 @@ client_id = 'BPKVKVNHFTFRPDRWFFRSVXV2QXNPDH' #Enter cliet ID within the quotes.
 secret = 'GPWPNBNFVTTQFZQPNGV1CFGMNMRXKSHXZNZSCTRH'  #Enter secret within the quotes.
 
 #Search String: 
-query = 'hlead(Libya Gaddafi)' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
+query = 'hlead(Gaddafi)' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
 
 #Search Range:
 #You can leave these blank, but if you enter the end date, you must also enter the start date.
 #Note that this range is inclusive (i.e. it will include all stories from the start day and the end day).
 sdate = '2011-10-20' #Enter the start date for your search (yyyy-mm-dd)
-edate = '2011-10-21' #Enter the end date for your search (yyyy-mm-dd)
+edate = '2015-10-21' #Enter the end date for your search (yyyy-mm-dd)
 
 #Sources
 sources = ['MTA2MzkzNg'] #Enter each source as a new list element (e.g. ['MTA2OTUwNQ','MTA2OTIwMQ', 'MTA1MjQ3Mw']) Source IDs are included in the 'LexisNexisSources' document.
@@ -202,7 +201,7 @@ while True:
     text = soup.get_text()
     res = json.loads(text) 
     
-    temp = temp.append(json_normalize(pd.DataFrame.from_dict(res)['value']),ignore_index = True)
+    temp = pd.concat([temp,pd.json_normalize(pd.DataFrame.from_dict(res)['value'])],ignore_index = True)
     
     
 
@@ -213,8 +212,9 @@ while True:
     json_data = r.json()
     if skip_value > get_result_count(json_data):  # Check to see if all the results have been looped through
         break
+    print("Remaining requests: " + list(r.headers.values())[13] + ' (minute/hour/day)')
 
-    sleep(20)  # Limit 5 requests per minute (every 12 seconds)
+    sleep(13)  # Limit 5 requests per minute (every 12 seconds)
 
 temp['Link'] = ""
 for i in range(len(temp['ResultId'])):
