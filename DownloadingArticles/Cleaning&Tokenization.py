@@ -7,10 +7,14 @@ Created on Mon Aug  9 18:40:45 2021
 
 import pandas as pd
 import os
-import regex as re
 import glob
 from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+import nltk 
+import random
+import ast
+
+random.seed(1234)
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles')
 
@@ -39,57 +43,56 @@ df = pd.concat(li, axis=0, ignore_index=True)
 df_full = df[['ResultId','Title','Date','Document.Content','Source.Name']]
 df_full_nona = df_full[df_full['Document.Content'].notna()]
 
+article_index = list(range(len(df_full_nona)))
+df_full_nona['article_index'] = article_index 
+
 
 ################
 ###Clean Text###
 ################
 print('Datasets Merged, Begin Cleaning Text')
 
-"""
-def clean_text(text):
-    xmltext = re.sub(u"[^\x20-\x7f]+",u" ",text) #Gets rid of special characters
-    xml_temp2 = re.sub(r'^.*?<nitf:body.content><bodyText>','', xmltext) #Gets rid of everything before <nitf:body.content><bodyText>
-    stripped = xml_temp2.split('</p></bodyText>', 1)[0] #Removes everything after </p></bodyText> 
-    xml_final = re.sub('<[^>]+>', ' ', stripped) #Removes everything within <>
-    return(xml_final)
-
-content_list = df_full_nona['Document.Content'].tolist()
-df_cleaned = [clean_text(row) for row in content_list]
-
-df_full_nona['clean_content'] = df_cleaned
-
-df_full_nodups = df_full_nona.drop_duplicates(subset = ['Source.Name','clean_content'])
-"""
-
-
 #Clean Text with Beautiful Soup
 content_list = df_full_nona['Document.Content'].tolist()
 
-bs_content = []
-for s in content_list:
-    body = []
-    soup = BeautifulSoup(s, 'html.parser').find_all("p")
-    for p in soup:
-        body.append(p.get_text())
-    bs_content.append("\n".join(body))
+paragraphs = []
+article_number = []
+for i in range(len(content_list)):
+    soup = BeautifulSoup(content_list[i], 'html.parser').find_all("p")
+    sentences = []
+    for j in range(len(soup)):
+        sentences.append(soup[j].get_text())
+        groups = list(zip(*[iter(sentences)]*5))
+    for k in range(len(groups)):
+        paragraphs.append(''.join([idx for tup in groups[k] for idx in tup]))
+        article_number.append(i)
+
+temp_df = pd.DataFrame(list(zip(paragraphs,article_number)), columns = ['paragraphs','article_number'])
+df = temp_df.merge(df_full_nona, left_on='article_number', right_on='article_index')
+
+df = df.drop_duplicates(subset = ['Source.Name','paragraphs'])
+df = df.drop(columns = ['Document.Content','article_number'], axis = 1)
+
+
     
-df_full_nona['clean_content'] = bs_content
+stemmer = nltk.stem.PorterStemmer()
+class StemmedTfidfVectorizer(TfidfVectorizer):
+    def build_analyzer(self):
+        analyzer = super(StemmedTfidfVectorizer, self).build_analyzer()
+        return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
 
-df_full_nodups = df_full_nona.drop_duplicates(subset = ['Source.Name','clean_content'])
-df = df_full_nodups.drop(columns = 'Document.Content', axis = 1)
+vectorizer = StemmedTfidfVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = .001, max_features=75000)
+#vectorizer = CountVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = .001, max_features=75000)
 
-
-    
-
-    
-    
-vectorizer = TfidfVectorizer(stop_words='english', ngram_range = (1,1), max_df = .9, min_df = .01)
-
-X = vectorizer.fit_transform(bs_content)
+X = vectorizer.fit_transform(df['paragraphs'])
 feature_names = vectorizer.get_feature_names_out()
 
 dense = X.todense()
 denselist = dense.tolist()
-df = pd.DataFrame(denselist, columns=feature_names)
+tdf = pd.DataFrame(denselist, columns=feature_names)
 
+
+df_code = df.sample(1000)
+
+df_code.to_csv(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles\test_coding.csv', index = False)
 
