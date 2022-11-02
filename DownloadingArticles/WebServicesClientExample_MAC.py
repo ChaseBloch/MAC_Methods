@@ -12,8 +12,10 @@ from datetime import datetime  # used to name json files
 from time import sleep
 import json
 import sys
-from bs4 import BeautifulSoup
 import pandas as pd
+import os
+
+os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles')
 
 
 d = datetime.today()
@@ -30,16 +32,16 @@ client_id = 'BPKVKVNHFTFRPDRWFFRSVXV2QXNPDH' #Enter cliet ID within the quotes.
 secret = 'GPWPNBNFVTTQFZQPNGV1CFGMNMRXKSHXZNZSCTRH'  #Enter secret within the quotes.
 
 #Search String: 
-query = 'hlead(Gaddafi)' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
+query = 'covert OR clandestine' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
 
 #Search Range:
 #You can leave these blank, but if you enter the end date, you must also enter the start date.
 #Note that this range is inclusive (i.e. it will include all stories from the start day and the end day).
-sdate = '2011-10-20' #Enter the start date for your search (yyyy-mm-dd)
-edate = '2015-10-21' #Enter the end date for your search (yyyy-mm-dd)
+sdate = '1979-01-01' #Enter the start date for your search (yyyy-mm-dd)
+edate = '1985-12-31' #Enter the end date for your search (yyyy-mm-dd)
 
 #Sources
-sources = ['MTA2MzkzNg'] #Enter each source as a new list element (e.g. ['MTA2OTUwNQ','MTA2OTIwMQ', 'MTA1MjQ3Mw']) Source IDs are included in the 'LexisNexisSources' document.
+sources = [''] #Enter each source as a new list element (e.g. ['MTA2OTUwNQ','MTA2OTIwMQ', 'MTA1MjQ3Mw']) Source IDs are included in the 'LexisNexisSources' document.
 
 #'MTA2MTk3Mg','MTA1MjQ3Mw','MTA2MzA3Ng','MTA2MzkzNg','MTA1MzA5OQ','MTA2NDYxMA','MTA2NDYyNA','MTA1MzI3Mw','MTA1NDUyOA','MTA2NzU3NQ','MTA2OTUwNQ','MTA2NzgzOQ','MTA2OTE3MQ','MTA2OTEwMQ'
 
@@ -195,18 +197,11 @@ temp = pd.DataFrame(columns=col_names)
 while True:
     request_url = build_url(content='News', query=query, skip=skip_value, expand='Document', top=top, filter=filter)  # Filter is set to filter=None here. Change to filter=filter to use the filter specified above
     r = requests.get(request_url, headers=request_headers)
-
-
-    soup = BeautifulSoup(r.text,'lxml')
-    text = soup.get_text()
+    
+    text = r.text
     res = json.loads(text) 
     
     temp = pd.concat([temp,pd.json_normalize(pd.DataFrame.from_dict(res)['value'])],ignore_index = True)
-    
-    
-
-    with open(str(time_now()) + '.json', 'w') as f_out:  # Creates a file with the current time as the file name.
-        f_out.write(text)
 
     skip_value = (skip_value + top)
     json_data = r.json()
@@ -214,10 +209,10 @@ while True:
         break
     print("Remaining requests: " + list(r.headers.values())[13] + ' (minute/hour/day)')
 
-    sleep(13)  # Limit 5 requests per minute (every 12 seconds)
+    sleep(21)  # Limit 5 requests per minute (every 12 seconds)
 
 temp['Link'] = ""
 for i in range(len(temp['ResultId'])):
     temp['Link'][i] = "https://advance.lexis.com/api/document?collection=News&id=" + temp['ResultId'][i] + "&context=1516831"
 
-temp.to_csv('LexisOutput_SearchType_Boolean.csv')
+temp.to_csv('MAC_79-85.csv')
