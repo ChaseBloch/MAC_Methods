@@ -14,7 +14,7 @@ import random
 
 random.seed(1234)
 
-os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles')
+os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downloading&Coding')
 
 
 
@@ -26,7 +26,7 @@ os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downl
 
 print('Merging Datasets')
 
-path = r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles\Downloaded'  
+path = r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downloading&Coding \Downloaded'  
 all_files = glob.glob(os.path.join(path , "*.csv"))
 
 li = []
