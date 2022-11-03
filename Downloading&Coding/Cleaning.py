@@ -9,7 +9,6 @@ import pandas as pd
 import os
 import glob
 from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 import nltk 
 import random
 
@@ -69,29 +68,15 @@ for i in range(len(content_list)):
 temp_df = pd.DataFrame(list(zip(paragraphs,article_number)), columns = ['paragraphs','article_number'])
 df = temp_df.merge(df_full_nona, left_on='article_number', right_on='article_index')
 
+
 df = df.drop_duplicates(subset = ['Source.Name','paragraphs'])
 df = df.drop(columns = ['Document.Content','article_number'], axis = 1)
-
-
-    
-stemmer = nltk.stem.PorterStemmer()
-class StemmedTfidfVectorizer(TfidfVectorizer):
-    def build_analyzer(self):
-        analyzer = super(StemmedTfidfVectorizer, self).build_analyzer()
-        return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
-
-vectorizer = StemmedTfidfVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = 3, max_features=75000)
-#vectorizer = CountVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = .001, max_features=75000)
-
-X = vectorizer.fit_transform(df['paragraphs'])
-feature_names = vectorizer.get_feature_names_out()
-
-dense = X.todense()
-denselist = dense.tolist()
-tdf = pd.DataFrame(denselist, columns=feature_names, index=article_number)
+df['par_number'] = df.index
 
 
 df_code = df.sample(1000)
 
-df_code.to_csv(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles\test_coding3.csv', index = False)
+df.to_csv(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downloading&Coding\OS_Test.csv', index = False)
+
+df_code.to_csv(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downloading&Coding\test_coding3.csv', index = False)
 
