@@ -12,7 +12,6 @@ from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 import nltk 
 import random
-import ast
 
 random.seed(1234)
 
@@ -28,7 +27,7 @@ os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downl
 
 print('Merging Datasets')
 
-path = r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles'  
+path = r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles\Downloaded'  
 all_files = glob.glob(os.path.join(path , "*.csv"))
 
 li = []
@@ -62,7 +61,7 @@ for i in range(len(content_list)):
     sentences = []
     for j in range(len(soup)):
         sentences.append(soup[j].get_text())
-        groups = list(zip(*[iter(sentences)]*5))
+        groups = list(zip(*[iter(sentences)]*3))
     for k in range(len(groups)):
         paragraphs.append(''.join([idx for tup in groups[k] for idx in tup]))
         article_number.append(i)
@@ -81,7 +80,7 @@ class StemmedTfidfVectorizer(TfidfVectorizer):
         analyzer = super(StemmedTfidfVectorizer, self).build_analyzer()
         return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
 
-vectorizer = StemmedTfidfVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = .001, max_features=75000)
+vectorizer = StemmedTfidfVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = 3, max_features=75000)
 #vectorizer = CountVectorizer(stop_words='english', ngram_range = (1,2), max_df = .8, min_df = .001, max_features=75000)
 
 X = vectorizer.fit_transform(df['paragraphs'])
@@ -89,10 +88,10 @@ feature_names = vectorizer.get_feature_names_out()
 
 dense = X.todense()
 denselist = dense.tolist()
-tdf = pd.DataFrame(denselist, columns=feature_names)
+tdf = pd.DataFrame(denselist, columns=feature_names, index=article_number)
 
 
 df_code = df.sample(1000)
 
-df_code.to_csv(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles\test_coding.csv', index = False)
+df_code.to_csv(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles\test_coding3.csv', index = False)
 

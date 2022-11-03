@@ -38,7 +38,7 @@ query = 'covert OR clandestine' #Enter the terms you would like to search for (e
 #You can leave these blank, but if you enter the end date, you must also enter the start date.
 #Note that this range is inclusive (i.e. it will include all stories from the start day and the end day).
 sdate = '1979-01-01' #Enter the start date for your search (yyyy-mm-dd)
-edate = '1985-12-31' #Enter the end date for your search (yyyy-mm-dd)
+edate = '1980-12-31' #Enter the end date for your search (yyyy-mm-dd)
 
 #Sources
 sources = [''] #Enter each source as a new list element (e.g. ['MTA2OTUwNQ','MTA2OTIwMQ', 'MTA1MjQ3Mw']) Source IDs are included in the 'LexisNexisSources' document.
@@ -215,4 +215,4 @@ temp['Link'] = ""
 for i in range(len(temp['ResultId'])):
     temp['Link'][i] = "https://advance.lexis.com/api/document?collection=News&id=" + temp['ResultId'][i] + "&context=1516831"
 
-temp.to_csv('MAC_79-85.csv')
+temp.to_csv('MAC_79-80.csv')
