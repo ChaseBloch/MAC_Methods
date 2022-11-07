@@ -15,7 +15,7 @@ import sys
 import pandas as pd
 import os
 
-os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\DownloadingArticles')
+os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downloading&Coding\Downloaded')
 
 
 d = datetime.today()
@@ -32,13 +32,13 @@ client_id = 'BPKVKVNHFTFRPDRWFFRSVXV2QXNPDH' #Enter cliet ID within the quotes.
 secret = 'GPWPNBNFVTTQFZQPNGV1CFGMNMRXKSHXZNZSCTRH'  #Enter secret within the quotes.
 
 #Search String: 
-query = 'covert OR clandestine' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
+query = '(coup AND covert) OR (aid AND covert) OR "election interference"' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
 
 #Search Range:
 #You can leave these blank, but if you enter the end date, you must also enter the start date.
 #Note that this range is inclusive (i.e. it will include all stories from the start day and the end day).
-sdate = '1979-01-01' #Enter the start date for your search (yyyy-mm-dd)
-edate = '1980-12-31' #Enter the end date for your search (yyyy-mm-dd)
+sdate = '1990-01-01' #Enter the start date for your search (yyyy-mm-dd)
+edate = '1995-12-31' #Enter the end date for your search (yyyy-mm-dd)
 
 #Sources
 sources = [''] #Enter each source as a new list element (e.g. ['MTA2OTUwNQ','MTA2OTIwMQ', 'MTA1MjQ3Mw']) Source IDs are included in the 'LexisNexisSources' document.
@@ -215,4 +215,4 @@ temp['Link'] = ""
 for i in range(len(temp['ResultId'])):
     temp['Link'][i] = "https://advance.lexis.com/api/document?collection=News&id=" + temp['ResultId'][i] + "&context=1516831"
 
-temp.to_csv('MAC_79-80.csv')
+temp.to_csv('MAC_90-95.csv')
