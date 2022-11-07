@@ -19,12 +19,14 @@ warnings.filterwarnings('ignore')
 
 #User modules
 from Modules.PreProcessingDecisions import SVC_sensitivity, pre_process_plots
-from Modules.Cleaning import clean_multi
+from Modules.Cleaning import clean_multi, nodup_sample
 
 #Importing and preparing datasets
 
 clean_multi(inpath, outpath)
+nodup_sample(inpath, outpath)
 
+#Re-import files and merge them after hand-coding
 res = [f for f in os.listdir(outpath) if re.search(r'ForCode_\d_.*.csv', f)]
 li = []
 for filename in res:
@@ -33,10 +35,16 @@ for filename in res:
 
     df = pd.concat(li, axis=0, ignore_index=True)
     
-df_OS_test = pd.read_csv(r"C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods\Downloading&Coding\OS_test.csv")
+res = [f for f in os.listdir(outpath) if re.search(r'Full_.*.csv', f)]
+li = []
+for filename in res:
+    df_test = pd.read_csv(outpath + filename, index_col=None, header=0)
+    li.append(df_test)
+
+    df_test = pd.concat(li, axis=0, ignore_index=True)
 
 df = df[df['code'].notna()]
-df_OS_test = df_OS_test[~df_OS_test.par_number.isin(df.par_number)]
+df_test = df_test[~df_test.par_number.isin(df.par_number)]
 
 #Running sensitivity analysis
 
