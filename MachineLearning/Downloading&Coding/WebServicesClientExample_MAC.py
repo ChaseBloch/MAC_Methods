@@ -32,7 +32,7 @@ client_id = 'BPKVKVNHFTFRPDRWFFRSVXV2QXNPDH' #Enter cliet ID within the quotes.
 secret = 'GPWPNBNFVTTQFZQPNGV1CFGMNMRXKSHXZNZSCTRH'  #Enter secret within the quotes.
 
 #Search String: 
-query = 'covert NEAR/25 "aid"' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
+query = 'covert NEAR/25 election' #Enter the terms you would like to search for (eg. hlead('air base' OR 'air strike'))
 
 #Search Range:
 #You can leave these blank, but if you enter the end date, you must also enter the start date.
@@ -215,4 +215,4 @@ temp['Link'] = ""
 for i in range(len(temp['ResultId'])):
     temp['Link'][i] = "https://advance.lexis.com/api/document?collection=News&id=" + temp['ResultId'][i] + "&context=1516831"
 
-temp.to_csv('MAC_Aid.csv')
+temp.to_csv('MAC_ElectInt.csv')

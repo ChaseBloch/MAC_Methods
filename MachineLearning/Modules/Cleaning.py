@@ -33,9 +33,6 @@ def clean_multi(inpath, outpath):
         else:
             
             df = pd.read_csv(filename, index_col=None, header=0)
-            #li.append(df)
-        
-            #df = pd.concat(li, axis=0, ignore_index=True)
             
             #ResultId, Link, Source.Name, Document.Content
             df_full = df[['ResultId','Title','Date','Document.Content','Source.Name']]
@@ -73,14 +70,22 @@ def clean_multi(inpath, outpath):
             df.to_csv(outpath + 'Full_' + filename, index = False)
             
             m = m + 1
-            os.chdir(ori_dir)
+    os.chdir(ori_dir)
             
-def nodup_sample(inpath, outpath):
+def nodup_sample(inpath, outpath, num_code):
     ori_dir = os.getcwd()
     os.chdir(inpath)
     all_files = glob.glob("*.csv")
     
+    lengths_temp = []
+    for filename in all_files:
+        lengths_temp.append(len(pd.read_csv(filename)))
     
+    lengths = []
+    for length in lengths_temp:
+        lengths.append(round((length/sum(lengths_temp))*num_code))
+    
+    i = 0
     for filename in all_files:
         file_path = Path(outpath + 'ForCode_1_' + filename)
         if file_path.is_file():
@@ -91,14 +96,15 @@ def nodup_sample(inpath, outpath):
                  li.append(df)
                  df = pd.concat(li, axis=0, ignore_index=True)
              df_temp = pd.read_csv(outpath + 'Full_' + filename)
-             df_code = df_temp[~df_temp['par_number'].isin(df['par_number'])].sample(1000)
+             df_code = df_temp[~df_temp['par_number'].isin(df['par_number'])].sample(lengths[i])
              print('Export ' + 'ForCode_' + str((len(res) + 1)) + '_' + filename + ' for hand-coding to outpath')
              df_code.to_csv(outpath + 'ForCode_' + str((len(res) + 1)) + '_' + filename, index = False)        
-             
+             i = i + 1
         else: 
             df_temp = pd.read_csv(outpath + 'Full_' + filename)
-            df_code = df_temp.sample(1000)
+            df_code = df_temp.sample(lengths[i])
             df_code.to_csv(outpath + 'ForCode_1_' + filename, index = False)
+            i = i + 1
     os.chdir(ori_dir)
      
         

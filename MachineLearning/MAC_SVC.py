@@ -24,7 +24,7 @@ from Modules.Cleaning import clean_multi, nodup_sample
 #Importing and preparing datasets
 
 clean_multi(inpath, outpath)
-nodup_sample(inpath, outpath)
+nodup_sample(inpath, outpath, 1500)
 
 #Re-import files and merge them after hand-coding
 res = [f for f in os.listdir(outpath) if re.search(r'ForCode_\d_.*.csv', f)]
