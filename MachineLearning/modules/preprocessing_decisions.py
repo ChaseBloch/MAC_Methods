@@ -22,7 +22,7 @@ from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
 def svc_sensitivity(df, scores):
     
     vectorizer = [
-        #Baseline
+        # Baseline
         StemmedTfidfVectorizer(
             norm='l2', encoding='utf-8', 
             stop_words='english', ngram_range = (1,2),
@@ -37,7 +37,7 @@ def svc_sensitivity(df, scores):
             strip_accents = 'ascii'
             ),
         
-        #Keep stop words
+        # Keep stop words
         StemmedTfidfVectorizer(
             norm='l2', encoding='utf-8', 
             ngram_range = (1,2), max_df = .8, 
@@ -52,7 +52,7 @@ def svc_sensitivity(df, scores):
             strip_accents = 'ascii'
             ),
         
-        #Unigrams Only
+        # Unigrams Only
         StemmedTfidfVectorizer(
             norm='l2', encoding='utf-8', 
             ngram_range = (1,1), stop_words = 'english', 
@@ -68,7 +68,7 @@ def svc_sensitivity(df, scores):
             max_features=10000, 
             strip_accents = 'ascii'
             ),
-        #No Stemming
+        # No Stemming
         TfidfVectorizer(
             norm='l2', encoding='utf-8', 
             ngram_range = (1,1), stop_words = 'english', 
@@ -86,6 +86,7 @@ def svc_sensitivity(df, scores):
             )
         ]
     
+    # Specify the list of pre-processing decisions for output.
     vec_name = [
         'TF-IDF Baseline', 'BoW Baseline',
         'TF-IDF Keep Stop Words', 'BoW Keep Stop Words',
@@ -102,15 +103,18 @@ def svc_sensitivity(df, scores):
     for score in scores:
         for vec in vectorizer:
             print(vec_name[i])
+            
+            # Extract features and labels, and split data for training.
             features = vec.fit_transform(df.paragraphs).toarray()
             labels = df.code
-    
             X_train, X_test, y_train, y_test = train_test_split(
                 features, labels, random_state = 1234,test_size=0.3
                 )
-    
+           
+            # Run the sensitivity analysis and store the best parameters.
             SVC_BestParams = svc_gridsearch_sens(score, X_train, y_train)
-        
+            
+            #Run cross validation using the best parameters.
             clf = SVC(**SVC_BestParams).fit(X_train, y_train)
             cv_scores = cross_val_score(
                 clf, X_train, y_train, cv = 5, scoring = score
@@ -119,6 +123,8 @@ def svc_sensitivity(df, scores):
             cv_std.append(cv_scores.std())
             score_name.append(score)
             pred1 = clf.predict(X_test)
+            
+            # Specify the output for different scores.
             if score == 'precision':
                 Out_score.append(
                     precision_score(y_test, pred1, average="macro")
@@ -141,6 +147,7 @@ def preprocess_plots(preprocessing_scores, scores):
     for score in scores: 
         for_plot = temp_df[temp_df[4] == score]
         
+        # Specify mean and error bar range.
         x = list(range(1, len(for_plot)+1))
         y = for_plot[1]
         e = for_plot[2]

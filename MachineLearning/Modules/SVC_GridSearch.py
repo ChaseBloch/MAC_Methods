@@ -10,6 +10,8 @@ from sklearn.svm import SVC
 
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_digits.html#sphx-glr-auto-examples-model-selection-plot-grid-search-digits-py
 
+
+#Grid search for mutltiple scores
 def svc_gridsearch(scores, X_train, y_train, 
                    tuned_parameters =[
                        {'kernel': ['rbf'],
@@ -29,6 +31,7 @@ def svc_gridsearch(scores, X_train, y_train,
     return(svc_best_params)
 
 
+#Grid search for only one score
 def svc_gridsearch_sens(score, X_train, y_train, 
                         tuned_parameters =[
                             {'kernel': ['rbf'],
