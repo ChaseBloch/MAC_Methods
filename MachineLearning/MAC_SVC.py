@@ -9,12 +9,14 @@ import re
 import pandas as pd
 import warnings
 
+os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
+         r'\MACoding\MAC_Methods\MachineLearning')
+
 # Local modules
 from modules.preprocessing_decisions import svc_sensitivity, preprocess_plots
 from modules.cleaning import clean_multi, nodup_sample
 
-os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
-         r'\MACoding\MAC_Methods\MachineLearning')
+
 
 outpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation/MACoding/'
            r'MAC_Methods/MachineLearning/Downloading&Coding/Exported/')

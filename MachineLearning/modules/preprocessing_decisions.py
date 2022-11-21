@@ -26,30 +26,30 @@ def svc_sensitivity(df, scores):
         StemmedTfidfVectorizer(
             norm='l2', encoding='utf-8', 
             stop_words='english', ngram_range = (1,2),
-            max_df = .8, min_df = 3, max_features=10000,
-            strip_accents = 'ascii'
+            max_df = .8, min_df = 3, max_features=60000,
+            strip_accents = 'ascii', lowercase=True
             ),
         
         StemmedCountVectorizer(
             encoding='utf-8', stop_words='english', 
             ngram_range = (1,2), max_df = .8, 
-            min_df = 3, max_features=10000,
-            strip_accents = 'ascii'
+            min_df = 3, max_features=60000,
+            strip_accents = 'ascii', lowercase=True
             ),
         
         # Keep stop words
         StemmedTfidfVectorizer(
             norm='l2', encoding='utf-8', 
             ngram_range = (1,2), max_df = .8, 
-            min_df = 3, max_features=10000, 
-            strip_accents = 'ascii'
+            min_df = 3, max_features=60000, 
+            strip_accents = 'ascii', lowercase=True
             ),
         
         StemmedCountVectorizer(
             encoding='utf-8', ngram_range = (1,2), 
             max_df = .8, min_df = 3, 
-            max_features=10000, 
-            strip_accents = 'ascii'
+            max_features=60000, 
+            strip_accents = 'ascii', lowercase=True
             ),
         
         # Unigrams Only
@@ -57,32 +57,32 @@ def svc_sensitivity(df, scores):
             norm='l2', encoding='utf-8', 
             ngram_range = (1,1), stop_words = 'english', 
             max_df = .8, min_df = 3, 
-            max_features=10000, 
-            strip_accents = 'ascii'
+            max_features=60000, 
+            strip_accents = 'ascii', lowercase=True
             ),
         
         StemmedCountVectorizer(
             encoding='utf-8', ngram_range = (1,1), 
             stop_words = 'english', 
             max_df = .8, min_df = 3, 
-            max_features=10000, 
-            strip_accents = 'ascii'
+            max_features=60000, 
+            strip_accents = 'ascii', lowercase=True
             ),
         # No Stemming
         TfidfVectorizer(
             norm='l2', encoding='utf-8', 
             ngram_range = (1,1), stop_words = 'english', 
             max_df = .8, min_df = 3, 
-            max_features=10000, 
-            strip_accents = 'ascii'
+            max_features=60000, 
+            strip_accents = 'ascii', lowercase=True
             ),
         
         CountVectorizer(
             encoding='utf-8', ngram_range = (1,1), 
             stop_words = 'english', 
             max_df = .8, min_df = 3, 
-            max_features=10000, 
-            strip_accents = 'ascii'
+            max_features=60000, 
+            strip_accents = 'ascii', lowercase=True
             )
         ]
     
@@ -108,7 +108,7 @@ def svc_sensitivity(df, scores):
             features = vec.fit_transform(df.paragraphs).toarray()
             labels = df.code
             X_train, X_test, y_train, y_test = train_test_split(
-                features, labels, random_state = 1234,test_size=0.3
+                features, labels, random_state = 1111,test_size=0.3
                 )
            
             # Run the sensitivity analysis and store the best parameters.

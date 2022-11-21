@@ -64,8 +64,8 @@ def clean_multi(inpath, outpath):
             
             # Remove paragraphs with less than 200 characters.   
             paragraphs = [
-                l for l in paragraphs if len(l) > 200 & len(l) < 32500
-                ] 
+                l for l in paragraphs if len(l) > 200 & len(l) < 32000
+                ]
             
             #Create dataset from cleaned news articles.
             temp_df = pd.DataFrame(
