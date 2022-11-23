@@ -18,10 +18,12 @@ from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import (f1_score, precision_score, 
                              recall_score, confusion_matrix, accuracy_score,
-                             confusion_matrix, ConfusionMatrixDisplay)
+                             confusion_matrix, ConfusionMatrixDisplay, roc_auc_score)
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import sklearn
 
 from modules.svc_gridsearch import svc_gridsearch_sens
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
@@ -79,14 +81,14 @@ def svc_sensitivity(df, scores):
         # No Stemming
         TfidfVectorizer(
             norm='l2', encoding='utf-8', 
-            ngram_range = (1,1), stop_words = 'english', 
+            ngram_range = (1,2), stop_words = 'english', 
             max_df = .8, min_df = 3, 
             max_features=60000, 
             strip_accents = 'ascii', lowercase=True
             ),
         
         CountVectorizer(
-            encoding='utf-8', ngram_range = (1,1), 
+            encoding='utf-8', ngram_range = (1,2), 
             stop_words = 'english', 
             max_df = .8, min_df = 3, 
             max_features=60000, 
@@ -123,9 +125,9 @@ def svc_sensitivity(df, scores):
             SVC_BestParams = svc_gridsearch_sens(score, X_train, y_train)
             
             #Run cross validation using the best parameters.
-            clf = SVC(**SVC_BestParams).fit(X_train, y_train)
+            clf = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)
             cv_scores = cross_val_score(
-                clf, X_train, y_train, cv = 5, scoring = score
+                clf, X_train, y_train, cv = 10, scoring = score
                 )
             cv_mean.append(cv_scores.mean())
             cv_std.append(cv_scores.std())
@@ -150,6 +152,7 @@ def svc_sensitivity(df, scores):
     return([vec_names, cv_mean,cv_std, Out_score, score_name])
 
 # Re-import files and merge them after hand-coding
+
 import re
 
 
@@ -171,30 +174,33 @@ for filename in res:
 df = df[df['code'].notna()]
 df_test = df_test[~df_test.par_number.isin(df.par_number)]
 
-vec = StemmedTfidfVectorizer(
-    norm='l2', encoding='utf-8', 
-    stop_words='english', ngram_range = (1,3),
-    max_df = .8, min_df = 1, max_features=60000,
+vec = StemmedCountVectorizer(
+    #norm='l2',
+    encoding='utf-8', 
+    stop_words='english', ngram_range = (1,2),
+    max_df = .8, min_df = 3, max_features=60000,
     strip_accents = 'ascii', lowercase=True
     )
 
 features = vec.fit_transform(df.paragraphs).toarray()
 labels = df.code
 X_train, X_test, y_train, y_test = train_test_split(
-    features, labels, random_state = 1111,test_size=0.3
+    features, labels, random_state = 1234,test_size=0.3
     )
 
 score = 'f1'
 SVC_BestParams = svc_gridsearch_sens(score, X_train, y_train)
 
-clf = SVC(**SVC_BestParams, class_weight = "balanced").fit(X_train, y_train)
+clf = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)
 cv_scores = cross_val_score(
     clf, X_train, y_train, cv = 10, scoring = score
     )
 cv_scores
 pred1 = clf.predict(X_test)
-accuracy_score(y_test, pred1)
-f1_score(y_test, pred1, average="macro")
+print(accuracy_score(y_test, pred1))
+print(f1_score(y_test, pred1, average="macro"))
+print(precision_score(y_test, pred1, average="macro"))
+print(recall_score(y_test, pred1, average="macro"))
 cm = confusion_matrix(y_test, pred1)
 cm_display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = [False, True])
 
@@ -217,6 +223,7 @@ def preprocess_plots(preprocessing_scores, scores):
         plt.plot(for_plot[3],x , linestyle = 'None', marker = 'o')
         plt.gca().invert_yaxis()
         plt.yticks(ticks = x, labels = for_plot[0])
+        plt.xticks(np.arange(.4, 1, .05))
         plt.title('Average ' + score + ' Score from Sensitivity Analysis')
         plt.savefig(
             'Plots/' + score +'_sensitivity.png', 

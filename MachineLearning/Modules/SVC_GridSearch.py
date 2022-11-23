@@ -42,7 +42,7 @@ def svc_gridsearch_sens(score, X_train, y_train,
                             ]):
     print("# Tuning hyper-parameters for %s" % score)
     clf = GridSearchCV(
-        SVC(), tuned_parameters, scoring='%s_macro' % score, cv = 10
+        SVC(class_weight = {0:.1, 1:.9}), tuned_parameters, scoring='%s_macro' % score, cv = 10
     )
     clf.fit(X_train, y_train)
     svc_best_params = clf.best_params_

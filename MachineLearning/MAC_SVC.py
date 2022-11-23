@@ -50,7 +50,7 @@ df = df[df['code'].notna()]
 df_test = df_test[~df_test.par_number.isin(df.par_number)]
 
 #Run sensitivity analysis
-scores = ['f1', 'precision']
+scores = ['f1']
 preprocessing_scores = svc_sensitivity(df, scores)
 preprocess_plots(preprocessing_scores, scores)
 
