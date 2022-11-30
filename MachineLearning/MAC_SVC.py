@@ -54,13 +54,13 @@ for filename in res:
     df_test = pd.concat(li, axis=0, ignore_index=True)
 
 # Drop duplicates and remove segments in training set from test set.
-df = df[df['code'].notna()]
-df_test = df_test[~df_test.par_number.isin(df.par_number)]
+df = df[df['code'].notna()].reset_index()
+df_test = df_test[~df_test.par_number.isin(df.par_number)].reset_index()
 
 #Run sensitivity analysis
-#scores = ['f1', 'precision']
-#preprocessing_scores = svc_sensitivity(df, scores)
-#preprocess_plots(preprocessing_scores, scores)
+scores = ['f1']
+preprocessing_scores = svc_sensitivity(df, scores)
+preprocess_plots(preprocessing_scores, scores)
 
 
 
@@ -105,6 +105,8 @@ f1=[]
 prec=[]
 rec=[]
 obs=[]
+obs_perc=[]
+acc=[]
 for i in range(lcount):
 
     indexNames_1 = np.where(predicted_prob>counter[i])
@@ -113,9 +115,13 @@ for i in range(lcount):
     y_pred_new = np.take(pred1,indexNames_col_1)
 
     obs.append(len(indexNames_col_1))
+    obs_perc.append(len(indexNames_col_1)/len(X_test))
+    acc.append(metrics.accuracy_score(y_test_new,y_pred_new))
     f1.append(metrics.f1_score(y_test_new,y_pred_new,average='macro'))
     prec.append(metrics.precision_score(y_test_new,y_pred_new,average='macro'))
     rec.append(metrics.recall_score(y_test_new,y_pred_new,average='macro'))
+    
+metr_df = pd.DataFrame(list(zip(counter, obs, obs_perc, acc, f1, prec, rec)), columns = ('counter','obs', 'obs_perc', 'acc', 'f1', 'prec', 'rec'))
 
 #Figure 4 F1 Score as Predicted Probabilty Threshold Increases
 fig, ax1 = plt.subplots()
@@ -135,3 +141,12 @@ fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.savefig('f1score.pdf',bbox_inches='tight')
 plt.show()
 
+
+#Test on full set
+features_test = vec.transform(df_test.paragraphs).toarray()
+pred_test = clf.predict(features_test)
+predicted_prob_test = clf.predict_proba(features_test)
+df_test['code'] = pred_test
+coded_index = np.where(predicted_prob_test > .77)[0]
+coded = df_test.iloc[coded_index]
+for_hand = df_test.iloc[~df_test.index.isin(coded_index)]

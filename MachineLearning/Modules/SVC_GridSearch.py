@@ -18,7 +18,7 @@ def svc_gridsearch(scores, X_train, y_train,
                         'gamma': [1e-3, 1e-4],
                         'C': [1, 10, 100, 1000]},
                        {'kernel': ['linear'], 
-                        'C': [1, 10, 100, 1000]}
+                        'C': [1, 10, 100, 1000]},
                        ]):
     for score in scores:
         print("# Tuning hyper-parameters for %s" % score)
@@ -38,7 +38,7 @@ def svc_gridsearch_sens(score, X_train, y_train,
                              'gamma': [1e-3, 1e-4],
                              'C': [1, 10, 100, 1000]},
                             {'kernel': ['linear'], 
-                             'C': [1, 10, 100, 1000]}
+                             'C': [1, 10, 100, 1000]},
                             ]):
     print("# Tuning hyper-parameters for %s" % score)
     clf = GridSearchCV(
