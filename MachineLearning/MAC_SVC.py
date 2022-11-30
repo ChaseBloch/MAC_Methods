@@ -13,7 +13,9 @@ from sklearn.svm import SVC
 from sklearn.metrics import (f1_score, precision_score, 
                              recall_score, confusion_matrix, accuracy_score,
                              confusion_matrix, ConfusionMatrixDisplay, roc_auc_score)
-
+from sklearn import metrics
+import matplotlib.pyplot as plt
+import numpy as np
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
          r'\MACoding\MAC_Methods\MachineLearning')
@@ -24,8 +26,6 @@ from modules.cleaning import clean_multi, nodup_sample
 from modules.svc_gridsearch import svc_gridsearch_sens
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
 
-
-
 outpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation/MACoding/'
            r'MAC_Methods/MachineLearning/Downloading&Coding/Exported/')
 inpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation\MACoding/'
@@ -35,8 +35,8 @@ inpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation\MACoding/'
 warnings.filterwarnings('ignore') 
 
 # Importing and preparing datasets
-clean_multi(inpath, outpath)
-nodup_sample(inpath, outpath, 1500)
+#clean_multi(inpath, outpath)
+#nodup_sample(inpath, outpath, 1500)
 
 # Re-import files and merge them after hand-coding
 res = [f for f in os.listdir(outpath) if re.search(r'ForCode_\d_.*.csv', f)]
@@ -58,9 +58,9 @@ df = df[df['code'].notna()]
 df_test = df_test[~df_test.par_number.isin(df.par_number)]
 
 #Run sensitivity analysis
-scores = ['f1', 'precision']
-preprocessing_scores = svc_sensitivity(df, scores)
-preprocess_plots(preprocessing_scores, scores)
+#scores = ['f1', 'precision']
+#preprocessing_scores = svc_sensitivity(df, scores)
+#preprocess_plots(preprocessing_scores, scores)
 
 
 
@@ -83,9 +83,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 score = 'f1'
 SVC_BestParams = svc_gridsearch_sens(score, X_train, y_train)
 
-clf = SVC(**SVC_BestParams, class_weight = {0:.05, 1:.95}).fit(X_train, y_train)
+clf = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit(X_train, y_train)
 
 pred1 = clf.predict(X_test)
+predicted_prob = clf.predict_proba(X_test)
 print(accuracy_score(y_test, pred1))
 print(f1_score(y_test, pred1, average="macro"))
 print(precision_score(y_test, pred1, average="macro"))
@@ -94,5 +95,43 @@ cm = confusion_matrix(y_test, pred1)
 cm_display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = [False, True])
 
 cm_display.plot()
+plt.show()
+
+
+#Confusion matrix after low predicted probability removed.
+counter = np.arange(0.01,0.96,0.01)
+lcount = len(counter)
+f1=[]
+prec=[]
+rec=[]
+obs=[]
+for i in range(lcount):
+
+    indexNames_1 = np.where(predicted_prob>counter[i])
+    indexNames_col_1 = np.unique(indexNames_1[0])
+    y_test_new = np.take(y_test,indexNames_col_1)
+    y_pred_new = np.take(pred1,indexNames_col_1)
+
+    obs.append(len(indexNames_col_1))
+    f1.append(metrics.f1_score(y_test_new,y_pred_new,average='macro'))
+    prec.append(metrics.precision_score(y_test_new,y_pred_new,average='macro'))
+    rec.append(metrics.recall_score(y_test_new,y_pred_new,average='macro'))
+
+#Figure 4 F1 Score as Predicted Probabilty Threshold Increases
+fig, ax1 = plt.subplots()
+
+color = 'tab:red'
+ax1.set_xlabel('Predicted Probability Threshold')
+ax1.set_ylabel('F1', color=color)
+ax1.plot(counter, f1, color=color)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('Number of Observations', color=color)  # we already handled the x-label with ax1
+ax2.plot(counter, obs, color=color)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.savefig('f1score.pdf',bbox_inches='tight')
 plt.show()
 
