@@ -17,6 +17,11 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 import numpy as np
 
+import nltk 
+from nltk.corpus import stopwords 
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize import RegexpTokenizer
+
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
          r'\MACoding\MAC_Methods\MachineLearning')
 
@@ -148,5 +153,35 @@ pred_test = clf.predict(features_test)
 predicted_prob_test = clf.predict_proba(features_test)
 df_test['code'] = pred_test
 coded_index = np.where(predicted_prob_test > .77)[0]
-coded = df_test.iloc[coded_index]
+coded = pd.concat([df_test.iloc[coded_index], df])
 for_hand = df_test.iloc[~df_test.index.isin(coded_index)]
+
+
+df_coded = coded[coded['code'] == 1]
+
+temp = df_coded.groupby(['article_index', 'Title','Date','Source.Name'])['paragraphs'].agg('\n'.join).reset_index()
+temp['year'] = [int(x[0:4]) for x in temp['Date']]
+
+
+def ProperNounExtractor(text):
+    output = []
+    sentences = nltk.sent_tokenize(text)
+    for sentence in sentences:
+        words = nltk.word_tokenize(sentence)
+        words=[word for word in words if word.isalpha() if word not in set(stopwords.words('english'))]
+        tagged = nltk.pos_tag(words)
+        for (word, tag) in tagged:
+            if tag == 'NNP': # If the word is a proper noun
+                output.append(word)
+    return(output)
+                
+prop_nouns = [] 
+for paragraph in temp['paragraphs']:
+    prop_nouns.append(list(set(ProperNounExtractor(paragraph))))
+    
+temp['prop_nouns'] = prop_nouns
+df_prop = temp.explode('prop_nouns').reset_index(drop=True)
+df_prop['paragraphs'] = [x[0:32000] for x in df_prop['paragraphs']]
+
+removals = df_prop['prop_nouns'].value_counts().reset_index()
+removals.to_csv('Downloading&Coding/Exported/removals.csv')
