@@ -5,71 +5,25 @@ Created on Thu Nov  3 12:00:33 2022
 @author: chase
 """
 import os
-import re
 import pandas as pd
-import warnings
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (f1_score, precision_score, 
-                             recall_score, confusion_matrix, accuracy_score,
-                             confusion_matrix, ConfusionMatrixDisplay, roc_auc_score)
+                             recall_score, confusion_matrix, accuracy_score, 
+                             ConfusionMatrixDisplay)
 from sklearn import metrics
 import matplotlib.pyplot as plt
 import numpy as np
-
-import nltk 
-from nltk.corpus import stopwords 
-from nltk.tokenize import word_tokenize, sent_tokenize
-from nltk.tokenize import RegexpTokenizer
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
          r'\MACoding\MAC_Methods\MachineLearning')
 
 # Local modules
-from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots
-from modules.cleaning import clean_multi, nodup_sample
-from modules.gridsearches import svc_gridsearch_sens, svc_gridsearch, rf_gridsearch_sens
-from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
+from modules.gridsearches import svc_gridsearch
+from modules.nltk_stemmer import StemmedCountVectorizer, ProperNounExtractor
 
-outpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation/MACoding/'
-           r'MAC_Methods/MachineLearning/Downloading&Coding/Exported/')
-inpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation\MACoding/'
-          r'MAC_Methods/MachineLearning/Downloading&Coding/Downloaded/')
-
-# Silence warnings caused by models without good training data.
-warnings.filterwarnings('ignore') 
-
-# Importing and preparing datasets
-#clean_multi(inpath, outpath)
-#nodup_sample(inpath, outpath, 1500)
-
-# Re-import files and merge them after hand-coding
-res = [f for f in os.listdir(outpath) if re.search(r'ForCode_\d_.*.csv', f)]
-li = []
-for filename in res:
-    df = pd.read_csv(outpath + filename, index_col=None, header=0)
-    li.append(df)
-    df = pd.concat(li, axis=0, ignore_index=True)
-    
-res = [f for f in os.listdir(outpath) if re.search(r'Full_.*.csv', f)]
-li = []
-for filename in res:
-    df_test = pd.read_csv(outpath + filename, index_col=None, header=0)
-    li.append(df_test)
-    df_test = pd.concat(li, axis=0, ignore_index=True)
-
-# Drop duplicates and remove segments in training set from test set.
-df = df[df['code'].notna()].reset_index()
-df_test = df_test[~df_test.par_number.isin(df.par_number)].reset_index()
-
-#Run sensitivity analysis
-scores = ['f1']
-svc_preprocessing_scores = sensitivity_analysis(df, scores, SVC, svc_gridsearch_sens)
-rf_preprocessing_scores = sensitivity_analysis(df, scores, RandomForestClassifier, rf_gridsearch_sens)
-#preprocess_plots(rf_preprocessing_scores, scores)
-
-
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test.csv')
 
 #Run Full Model
 vec = StemmedCountVectorizer(
@@ -163,19 +117,6 @@ df_coded = coded[coded['code'] == 1]
 
 temp = df_coded.groupby(['article_index', 'Title','Date','Source.Name'])['paragraphs'].agg('\n'.join).reset_index()
 temp['year'] = [int(x[0:4]) for x in temp['Date']]
-
-
-def ProperNounExtractor(text):
-    output = []
-    sentences = nltk.sent_tokenize(text)
-    for sentence in sentences:
-        words = nltk.word_tokenize(sentence)
-        words=[word for word in words if word.isalpha() if word not in set(stopwords.words('english'))]
-        tagged = nltk.pos_tag(words)
-        for (word, tag) in tagged:
-            if tag == 'NNP': # If the word is a proper noun
-                output.append(word)
-    return(output)
                 
 prop_nouns = [] 
 for paragraph in temp['paragraphs']:

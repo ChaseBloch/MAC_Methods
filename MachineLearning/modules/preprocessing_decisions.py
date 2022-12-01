@@ -14,18 +14,13 @@ os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
          r'\MACoding\MAC_Methods\MachineLearning')
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.metrics import (f1_score, precision_score, 
-                             recall_score, confusion_matrix, accuracy_score,
-                             confusion_matrix, ConfusionMatrixDisplay, roc_auc_score)
+from sklearn.metrics import (f1_score, precision_score)
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import sklearn
 
-from modules.gridsearches import svc_gridsearch_sens
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
     
 vectorizer = [
@@ -145,18 +140,17 @@ def sensitivity_analysis(df, scores, model, gridsearch):
                 print()
             else:
                 sys.exit(score + ' not yet added to pre-process function')    
-        i = i+1
+            i = i+1
         vec_names = vec_names + vec_name
     return([vec_names, cv_mean,cv_std, Out_score, score_name])
-
-# Re-import files and merge them after hand-coding
 
 
 def preprocess_plots(preprocessing_scores, scores):
     temp_df = pd.DataFrame(preprocessing_scores).transpose()
+    fig = []
     for score in scores: 
         for_plot = temp_df[temp_df[4] == score]
-        
+        fig.append(plt.figure())
         # Specify mean and error bar range.
         x = list(range(1, len(for_plot)+1))
         y = for_plot[1]
@@ -168,8 +162,5 @@ def preprocess_plots(preprocessing_scores, scores):
         plt.yticks(ticks = x, labels = for_plot[0])
         plt.xticks(np.arange(.4, 1, .05))
         plt.title('Average ' + score + ' Score from Sensitivity Analysis')
-        plt.savefig(
-            'Plots/' + score +'_sensitivity.png', 
-            bbox_inches = "tight"
-            )
         plt.show()
+    return fig

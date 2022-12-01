@@ -78,7 +78,7 @@ def rf_gridsearch(scores, X_train, y_train):
             random_grid, 
             scoring='%s_macro' % score, 
             cv = 5,
-            n_iter = 10
+            n_iter = 2
             )
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
@@ -92,7 +92,7 @@ def rf_gridsearch_sens(score, X_train, y_train):
             random_grid, 
             scoring='%s_macro' % score, 
             cv = 5,
-            n_iter = 10
+            n_iter = 2
             )
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
