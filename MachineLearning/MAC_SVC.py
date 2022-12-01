@@ -10,6 +10,7 @@ import pandas as pd
 import warnings
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (f1_score, precision_score, 
                              recall_score, confusion_matrix, accuracy_score,
                              confusion_matrix, ConfusionMatrixDisplay, roc_auc_score)
@@ -26,9 +27,9 @@ os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
          r'\MACoding\MAC_Methods\MachineLearning')
 
 # Local modules
-from modules.preprocessing_decisions import svc_sensitivity, preprocess_plots
+from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots
 from modules.cleaning import clean_multi, nodup_sample
-from modules.svc_gridsearch import svc_gridsearch_sens
+from modules.gridsearches import svc_gridsearch_sens, svc_gridsearch, rf_gridsearch_sens
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
 
 outpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation/MACoding/'
@@ -63,9 +64,10 @@ df = df[df['code'].notna()].reset_index()
 df_test = df_test[~df_test.par_number.isin(df.par_number)].reset_index()
 
 #Run sensitivity analysis
-#scores = ['f1']
-#preprocessing_scores = svc_sensitivity(df, scores)
-#preprocess_plots(preprocessing_scores, scores)
+scores = ['f1']
+svc_preprocessing_scores = sensitivity_analysis(df, scores, SVC, svc_gridsearch_sens)
+rf_preprocessing_scores = sensitivity_analysis(df, scores, RandomForestClassifier, rf_gridsearch_sens)
+#preprocess_plots(rf_preprocessing_scores, scores)
 
 
 
@@ -86,7 +88,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     )
 
 score = 'f1'
-SVC_BestParams = svc_gridsearch_sens(score, X_train, y_train)
+SVC_BestParams = svc_gridsearch(score, X_train, y_train)
 
 clf = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit(X_train, y_train)
 

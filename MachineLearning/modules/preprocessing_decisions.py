@@ -25,85 +25,83 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn
 
-from modules.svc_gridsearch import svc_gridsearch_sens
+from modules.gridsearches import svc_gridsearch_sens
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
+    
+vectorizer = [
+# Baseline
+StemmedTfidfVectorizer(
+    norm='l2', encoding='utf-8', 
+    stop_words='english', ngram_range = (1,2),
+    max_df = .8, min_df = 3, max_features=60000,
+    strip_accents = 'ascii', lowercase=True
+    ),
 
+StemmedCountVectorizer(
+    encoding='utf-8', stop_words='english', 
+    ngram_range = (1,2), max_df = .8, 
+    min_df = 3, max_features=60000,
+    strip_accents = 'ascii', lowercase=True
+    ),
 
-def svc_sensitivity(df, scores):
-    
-    vectorizer = [
-        # Baseline
-        StemmedTfidfVectorizer(
-            norm='l2', encoding='utf-8', 
-            stop_words='english', ngram_range = (1,2),
-            max_df = .8, min_df = 3, max_features=60000,
-            strip_accents = 'ascii', lowercase=True
-            ),
-        
-        StemmedCountVectorizer(
-            encoding='utf-8', stop_words='english', 
-            ngram_range = (1,2), max_df = .8, 
-            min_df = 3, max_features=60000,
-            strip_accents = 'ascii', lowercase=True
-            ),
-        
-        # Keep stop words
-        StemmedTfidfVectorizer(
-            norm='l2', encoding='utf-8', 
-            ngram_range = (1,2), max_df = .8, 
-            min_df = 3, max_features=60000, 
-            strip_accents = 'ascii', lowercase=True
-            ),
-        
-        StemmedCountVectorizer(
-            encoding='utf-8', ngram_range = (1,2), 
-            max_df = .8, min_df = 3, 
-            max_features=60000, 
-            strip_accents = 'ascii', lowercase=True
-            ),
-        
-        # Unigrams Only
-        StemmedTfidfVectorizer(
-            norm='l2', encoding='utf-8', 
-            ngram_range = (1,1), stop_words = 'english', 
-            max_df = .8, min_df = 3, 
-            max_features=60000, 
-            strip_accents = 'ascii', lowercase=True
-            ),
-        
-        StemmedCountVectorizer(
-            encoding='utf-8', ngram_range = (1,1), 
-            stop_words = 'english', 
-            max_df = .8, min_df = 3, 
-            max_features=60000, 
-            strip_accents = 'ascii', lowercase=True
-            ),
-        # No Stemming
-        TfidfVectorizer(
-            norm='l2', encoding='utf-8', 
-            ngram_range = (1,2), stop_words = 'english', 
-            max_df = .8, min_df = 3, 
-            max_features=60000, 
-            strip_accents = 'ascii', lowercase=True
-            ),
-        
-        CountVectorizer(
-            encoding='utf-8', ngram_range = (1,2), 
-            stop_words = 'english', 
-            max_df = .8, min_df = 3, 
-            max_features=60000, 
-            strip_accents = 'ascii', lowercase=True
-            )
-        ]
-    
-    # Specify the list of pre-processing decisions for output.
-    vec_name = [
-        'TF-IDF Baseline', 'BoW Baseline',
-        'TF-IDF Keep Stop Words', 'BoW Keep Stop Words',
-        "TF-IDF Unigrams Only", "BoW Unigrams Only",
-        "TF-IDF No Stemming", "BoW No Stemming"
-        ]
-    
+# Keep stop words
+StemmedTfidfVectorizer(
+    norm='l2', encoding='utf-8', 
+    ngram_range = (1,2), max_df = .8, 
+    min_df = 3, max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    ),
+
+StemmedCountVectorizer(
+    encoding='utf-8', ngram_range = (1,2), 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    ),
+
+# Unigrams Only
+StemmedTfidfVectorizer(
+    norm='l2', encoding='utf-8', 
+    ngram_range = (1,1), stop_words = 'english', 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    ),
+
+StemmedCountVectorizer(
+    encoding='utf-8', ngram_range = (1,1), 
+    stop_words = 'english', 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    ),
+# No Stemming
+TfidfVectorizer(
+    norm='l2', encoding='utf-8', 
+    ngram_range = (1,2), stop_words = 'english', 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    ),
+
+CountVectorizer(
+    encoding='utf-8', ngram_range = (1,2), 
+    stop_words = 'english', 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    )
+]
+
+# Specify the list of pre-processing decisions for output.
+vec_name = [
+'TF-IDF Baseline', 'BoW Baseline',
+'TF-IDF Keep Stop Words', 'BoW Keep Stop Words',
+"TF-IDF Unigrams Only", "BoW Unigrams Only",
+"TF-IDF No Stemming", "BoW No Stemming"
+]
+
+def sensitivity_analysis(df, scores, model, gridsearch):    
     cv_mean = []
     cv_std = []
     Out_score = []
@@ -122,10 +120,10 @@ def svc_sensitivity(df, scores):
                 )
            
             # Run the sensitivity analysis and store the best parameters.
-            SVC_BestParams = svc_gridsearch_sens(score, X_train, y_train)
+            BestParams = gridsearch(score, X_train, y_train)
             
             #Run cross validation using the best parameters.
-            clf = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)
+            clf = model(**BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)
             cv_scores = cross_val_score(
                 clf, X_train, y_train, cv = 5, scoring = score
                 )
