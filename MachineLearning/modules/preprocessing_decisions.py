@@ -20,6 +20,7 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.naive_bayes import MultinomialNB
 
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
     
@@ -118,7 +119,10 @@ def sensitivity_analysis(df, scores, model, gridsearch):
             BestParams = gridsearch(score, X_train, y_train)
             
             #Run cross validation using the best parameters.
-            clf = model(**BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)
+            if(model == MultinomialNB):
+                clf = model(**BestParams).fit(X_train, y_train)
+            else:
+                clf = model(**BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)
             cv_scores = cross_val_score(
                 clf, X_train, y_train, cv = 5, scoring = score
                 )

@@ -9,10 +9,12 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
 
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_digits.html#sphx-glr-auto-examples-model-selection-plot-grid-search-digits-py
 
-
+# SVC grid searches
 tuned_parameters =[
     {'kernel': ['rbf'],
      'gamma': [1e-3, 1e-4],
@@ -44,10 +46,7 @@ def svc_gridsearch_sens(score, X_train, y_train):
     svc_best_params = clf.best_params_
     return(svc_best_params)
 
-
-
-
-
+# Random Forest grid searches
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 # Number of features to consider at every split
 max_features = ['auto', 'sqrt']
@@ -97,3 +96,35 @@ def rf_gridsearch_sens(score, X_train, y_train):
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
         return(rf_best_params)
+    
+
+# Multinomial Naive Bayes Grid Searches
+grid_params = {
+  'alpha': np.linspace(0.1, 0.5, 1.5, 6),
+  'fit_prior': [True, False],  
+}
+
+def nb_gridsearch(scores, X_train, y_train):
+    for score in scores:
+        print("# Tuning hyper-parameters for %s" % score)
+        print()
+        clf = GridSearchCV(
+            MultinomialNB(), 
+            grid_params, scoring='%s_macro' % score
+        )
+        clf.fit(X_train, y_train)
+        mnb_best_params = clf.best_params_
+        return(mnb_best_params)
+    
+def nb_gridsearch_sens(score, X_train, y_train):
+        print("# Tuning hyper-parameters for %s" % score)
+        print()
+        clf = GridSearchCV(
+            MultinomialNB(), 
+            grid_params, scoring='%s_macro' % score
+        )
+        clf.fit(X_train, y_train)
+        mnb_best_params = clf.best_params_
+        return(mnb_best_params)
+       
+
