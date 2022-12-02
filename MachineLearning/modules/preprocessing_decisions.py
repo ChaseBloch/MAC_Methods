@@ -150,21 +150,24 @@ def sensitivity_analysis(df, scores, model, gridsearch):
 
 
 def preprocess_plots(preprocessing_scores, scores):
-    temp_df = pd.DataFrame(preprocessing_scores).transpose()
+    temp_df = pd.DataFrame(preprocessing_scores).transpose().rename(
+        columns = {
+            0:'vec_names', 1:'cv_mean',2:'cv_std', 3:'out_score', 4:'score_name'
+            })
     fig = []
     for score in scores: 
-        for_plot = temp_df[temp_df[4] == score]
+        for_plot = temp_df[temp_df['score_name'] == score]
         fig.append(plt.figure())
         # Specify mean and error bar range.
         x = list(range(1, len(for_plot)+1))
-        y = for_plot[1]
-        e = for_plot[2]
+        y = for_plot['cv_mean']
+        e = for_plot['cv_std']
         
         plt.errorbar(y, x, xerr = e, linestyle='None', marker='o')
-        plt.plot(for_plot[3],x , linestyle = 'None', marker = 'o')
+        plt.plot(for_plot['out_score'],x , linestyle = 'None', marker = 'o')
         plt.gca().invert_yaxis()
-        plt.yticks(ticks = x, labels = for_plot[0])
+        plt.yticks(ticks = x, labels = for_plot['vec_names'])
         plt.xticks(np.arange(.4, 1, .05))
         plt.title('Average ' + score + ' Score from Sensitivity Analysis')
         plt.show()
-    return fig
+    return fig, temp_df

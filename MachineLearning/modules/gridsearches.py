@@ -4,7 +4,6 @@ Created on Thu Nov  3 14:33:31 2022
 
 @author: chase
 """
-from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -77,7 +76,7 @@ def rf_gridsearch(scores, X_train, y_train):
             random_grid, 
             scoring='%s_macro' % score, 
             cv = 5,
-            n_iter = 2
+            n_iter = 50
             )
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
@@ -91,7 +90,7 @@ def rf_gridsearch_sens(score, X_train, y_train):
             random_grid, 
             scoring='%s_macro' % score, 
             cv = 5,
-            n_iter = 2
+            n_iter = 50
             )
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
@@ -100,7 +99,7 @@ def rf_gridsearch_sens(score, X_train, y_train):
 
 # Multinomial Naive Bayes Grid Searches
 grid_params = {
-  'alpha': np.linspace(0.1, 0.5, 1.5, 6),
+  'alpha': np.linspace(0.5, 1.5, 6),
   'fit_prior': [True, False],  
 }
 
@@ -110,7 +109,8 @@ def nb_gridsearch(scores, X_train, y_train):
         print()
         clf = GridSearchCV(
             MultinomialNB(), 
-            grid_params, scoring='%s_macro' % score
+            grid_params, scoring='%s_macro' % score,
+            cv = 5
         )
         clf.fit(X_train, y_train)
         mnb_best_params = clf.best_params_
@@ -121,10 +121,48 @@ def nb_gridsearch_sens(score, X_train, y_train):
         print()
         clf = GridSearchCV(
             MultinomialNB(), 
-            grid_params, scoring='%s_macro' % score
+            grid_params, scoring='%s_macro' % score,
+            cv = 5
         )
         clf.fit(X_train, y_train)
         mnb_best_params = clf.best_params_
         return(mnb_best_params)
+    
+# Gridsearch for Logistic Regression
+penalty = ['l1', 'l2']
+C = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]
+solver = ['saga']
+
+param_grid = dict(penalty=penalty,
+                   C=C,
+                   solver=solver)
+def lr_gridsearch(scores, X_train, y_train):
+    for score in scores:
+        print("# Tuning hyper-parameters for %s" % score)
+        print()
+    
+        clf = GridSearchCV(estimator=LogisticRegression(class_weight = {0:.1, 1:.9}, max_iter = 1000),
+                           param_grid=param_grid, 
+                           scoring= '%s_macro' % score,
+                           cv = 5)
+        clf.fit(X_train, y_train)
+    
+        print("Best parameters set found on development set:")
+        print()
+        lr_best_params = clf.best_params_
+        return(lr_best_params)
+    
+def lr_gridsearch_sens(score, X_train, y_train):
+    print("# Tuning hyper-parameters for %s" % score)
+    print()
+
+    clf = GridSearchCV(estimator=LogisticRegression(class_weight = {0:.1, 1:.9}, max_iter=1000),
+                       param_grid=param_grid, 
+                       scoring= '%s_macro' % score,
+                       cv = 5)
+    clf.fit(X_train, y_train)
+    lr_best_params = clf.best_params_
+    return(lr_best_params)
+
        
 

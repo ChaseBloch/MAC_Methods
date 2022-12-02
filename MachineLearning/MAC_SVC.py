@@ -108,7 +108,8 @@ features_test = vec.transform(df_test.paragraphs).toarray()
 pred_test = clf.predict(features_test)
 predicted_prob_test = clf.predict_proba(features_test)
 df_test['code'] = pred_test
-coded_index = np.where(predicted_prob_test > .77)[0]
+threshold = .77 # Set this value to reach desired threshold
+coded_index = np.where(predicted_prob_test > threshold)[0]
 coded = pd.concat([df_test.iloc[coded_index], df])
 for_hand = df_test.iloc[~df_test.index.isin(coded_index)]
 
