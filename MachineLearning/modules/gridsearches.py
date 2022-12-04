@@ -10,6 +10,10 @@ from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
+import xgboost as xgb
+from hyperopt import  STATUS_OK, Trials, fmin, hp, tpe
+from sklearn.metrics import f1_score
+
 
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_digits.html#sphx-glr-auto-examples-model-selection-plot-grid-search-digits-py
 
@@ -164,5 +168,50 @@ def lr_gridsearch_sens(score, X_train, y_train):
     lr_best_params = clf.best_params_
     return(lr_best_params)
 
+space = {
+    'learning_rate': hp.loguniform('learning_rate', -7, 0),
+    'max_depth': hp.uniform('max_depth', 1, 100),
+    'min_child_weight': hp.loguniform('min_child_weight', -2, 3),
+    'subsample': hp.uniform('subsample', 0.5, 1),
+    'colsample_bytree': hp.uniform('colsample_bytree', 0.5, 1),
+    'gamma': hp.loguniform('gamma', -10, 10),
+    'alpha': hp.loguniform('alpha', -10, 10),
+    'lambda': hp.loguniform('lambda', -10, 10),
+    'objective': 'binary:logistic',
+    'eval_metric': 'auc',
+    'n_estimators': 1000,
+    'reg_alpha' : hp.quniform('reg_alpha', 40,180,1),
+    'seed': 123,
+    'scale_pos_weight': hp.uniform('scale_pos_weight',2,5)
+}
+
+
+def xgb_gridsearch(X_train, y_train, X_test, y_test):
+    def objective(space):
+        clf=xgb.XGBClassifier(
+                        scale_pos_weight=space['scale_pos_weight'], n_estimators =space['n_estimators'], max_depth = int(space['max_depth']), gamma = space['gamma'], early_stopping_rounds=250, eval_metric="auc",
+                        reg_alpha = int(space['reg_alpha']),min_child_weight=int(space['min_child_weight']), 
+                        colsample_bytree=int(space['colsample_bytree']))
+        
+        evaluation = [( X_train, y_train), ( X_test, y_test)]
+        
+        clf.fit(X_train, y_train,
+                eval_set=evaluation,verbose=False)
+        
+        pred = clf.predict(X_test)
+        accuracy = f1_score(y_test, pred>0.5)
+        print ("SCORE:", accuracy)
+        return {'loss': -accuracy, 'status': STATUS_OK }
+
+    
+    trials = Trials()
+
+    best_hyperparams = fmin(fn = objective,
+                            space = space,
+                            algo = tpe.suggest,
+                            max_evals = 500,
+                            trials = trials)
+    best_hyperparams['max_depth'] = round(best_hyperparams['max_depth'])
+    return(best_hyperparams)
        
 

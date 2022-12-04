@@ -21,6 +21,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.naive_bayes import MultinomialNB
+from xgboost import XGBClassifier
 
 from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
     
@@ -116,10 +117,15 @@ def sensitivity_analysis(df, scores, model, gridsearch):
                 )
            
             # Run the sensitivity analysis and store the best parameters.
-            BestParams = gridsearch(score, X_train, y_train)
+            if(model == XGBClassifier):
+                BestParams = gridsearch(X_train, y_train, X_test, y_test)
+            else:
+                BestParams = gridsearch(score, X_train, y_train)
             
             #Run cross validation using the best parameters.
             if(model == MultinomialNB):
+               clf = model(**BestParams).fit(X_train, y_train)
+            elif(model == XGBClassifier):
                 clf = model(**BestParams).fit(X_train, y_train)
             else:
                 clf = model(**BestParams, class_weight = {0:.1, 1:.9}).fit(X_train, y_train)

@@ -10,12 +10,13 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
+from xgboost import XGBClassifier
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods'
          r'\MachineLearning/')
 
 from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots
-from modules.gridsearches import svc_gridsearch_sens, rf_gridsearch_sens, nb_gridsearch_sens, lr_gridsearch_sens
+from modules.gridsearches import svc_gridsearch_sens, rf_gridsearch_sens, nb_gridsearch_sens, lr_gridsearch_sens, xgb_gridsearch
 
 df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
 df_test = pd.read_csv(r'Downloading&Coding\Exported/df_test.csv')
@@ -55,3 +56,11 @@ lr_plots, df_lr_pre = preprocess_plots(lr_preprocessing_scores, scores)
 df_lr_pre.to_csv(r'Downloading&Coding/Exported/df_lr_pre.csv', index = False)
 
 lr_plots[0].savefig('Plots/LR_f1_sensitivity.png', bbox_inches = "tight")
+
+# Run XGBoost tuning
+xgb_preprocessing_scores = sensitivity_analysis(df, scores, XGBClassifier, xgb_gridsearch)
+xgb_plots, df_xgb_pre = preprocess_plots(xgb_preprocessing_scores, scores)
+
+df_xgb_pre.to_csv(r'Downloading&Coding/Exported/df_xgb_pre.csv', index = False)
+
+xgb_plots[0].savefig('Plots/XGB_f1_sensitivity.png', bbox_inches = "tight")

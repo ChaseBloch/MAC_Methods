@@ -17,6 +17,8 @@ from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from sklearn import metrics
+import random
+random.seed(1234)
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods'
          r'\MachineLearning')
@@ -43,15 +45,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     )
 
 # Import parameter dictionaries for hyper parameter optimization
-space={'max_depth': hp.quniform("max_depth", 3, 18, 1),
-        'gamma': hp.uniform ('gamma', 1,9),
-        'reg_alpha' : hp.quniform('reg_alpha', 40,180,1),
-        'reg_lambda' : hp.uniform('reg_lambda', 0,1),
-        'colsample_bytree' : hp.uniform('colsample_bytree', 0.5,1),
-        'min_child_weight' : hp.quniform('min_child_weight', 0, 10, 1),
-        'n_estimators': 180,
-        'seed': 0
-    }
 
 space = {
     'learning_rate': hp.loguniform('learning_rate', -7, 0),
