@@ -16,6 +16,7 @@ os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import (f1_score, precision_score)
+from sklearn import metrics
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -177,3 +178,35 @@ def preprocess_plots(preprocessing_scores, scores):
         plt.title('Average ' + score + ' Score from Sensitivity Analysis')
         plt.show()
     return fig, temp_df
+
+
+
+
+def confidence_measures(predicted_prob, X_test, y_test, pred1):
+    
+    counter = np.arange(0.5,0.96,0.001)
+    lcount = len(counter)
+    f1=[]
+    prec=[]
+    rec=[]
+    obs=[]
+    obs_perc=[]
+    acc=[]
+
+    for i in range(lcount):
+    
+        indexNames_1 = np.where(predicted_prob>counter[i])
+        indexNames_col_1 = np.unique(indexNames_1[0])
+        y_test_new = np.take(y_test,indexNames_col_1)
+        y_pred_new = np.take(pred1,indexNames_col_1)
+    
+        obs.append(len(indexNames_col_1))
+        obs_perc.append(len(indexNames_col_1)/len(X_test))
+        acc.append(metrics.accuracy_score(y_test_new,y_pred_new))
+        f1.append(metrics.f1_score(y_test_new,y_pred_new,average='macro'))
+        prec.append(metrics.precision_score(y_test_new,y_pred_new,average='macro'))
+        rec.append(metrics.recall_score(y_test_new,y_pred_new,average='macro'))
+        
+    metr_df = pd.DataFrame(list(zip(counter, obs, obs_perc, acc, f1, prec, rec)), columns = ('counter','obs', 'obs_perc', 'acc', 'f1', 'prec', 'rec'))
+    return metr_df 
+

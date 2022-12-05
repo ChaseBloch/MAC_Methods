@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 import xgboost as xgb
 from hyperopt import  STATUS_OK, Trials, fmin, hp, tpe
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 
 
 # https://scikit-learn.org/stable/auto_examples/model_selection/plot_grid_search_digits.html#sphx-glr-auto-examples-model-selection-plot-grid-search-digits-py
@@ -31,7 +31,7 @@ def svc_gridsearch(scores, X_train, y_train):
         print("# Tuning hyper-parameters for %s" % score)
         print()
         clf = GridSearchCV(
-            SVC(), tuned_parameters, scoring='%s_macro' % score, cv = 5
+            SVC(class_weight = {0:.1, 1:.9}), tuned_parameters, scoring='%s_macro' % score, cv = 5
             )
         clf.fit(X_train, y_train)
         svc_best_params = clf.best_params_
@@ -199,7 +199,7 @@ def xgb_gridsearch(X_train, y_train, X_test, y_test):
                 eval_set=evaluation,verbose=False)
         
         pred = clf.predict(X_test)
-        accuracy = f1_score(y_test, pred>0.5)
+        accuracy = accuracy_score(y_test, pred>0.5)
         print ("SCORE:", accuracy)
         return {'loss': -accuracy, 'status': STATUS_OK }
 
