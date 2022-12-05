@@ -22,7 +22,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods'
          r'\MachineLearning/')
 
-from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures
+from modules.nltk_stemmer import ProperNounExtractor
+from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 from modules.gridsearches import svc_gridsearch_sens, rf_gridsearch_sens, nb_gridsearch_sens, lr_gridsearch_sens, xgb_gridsearch, svc_gridsearch, rf_gridsearch
 
 df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
@@ -104,9 +105,10 @@ plt.savefig('Plots/AllModels_f1_sensitivity.png', bbox_inches = "tight")
 plt.show()
 
 scores = ['f1']
+labels = df.code
 
 # Run Full SVC Model
-vec = StemmedCountVectorizer(
+vec_svc = StemmedCountVectorizer(
     #norm='l2',
     encoding='utf-8', 
     stop_words='english',
@@ -115,10 +117,10 @@ vec = StemmedCountVectorizer(
     strip_accents = 'ascii', lowercase=True
     )
 
-features = vec.fit_transform(df.paragraphs).toarray()
-labels = df.code
+features_svc = vec_svc.fit_transform(df.paragraphs).toarray()
+
 X_train_svc, X_test_svc, y_train_svc, y_test_svc = train_test_split(
-    features, labels, random_state = 1234,test_size=0.3
+    features_svc, labels, random_state = 1234,test_size=0.3
     )
 
 SVC_BestParams = svc_gridsearch(scores, X_train_svc, y_train_svc)
@@ -126,7 +128,7 @@ svc = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit
 pickle.dump(svc, open('Saves/svc.pkl', 'wb'))
 
 # Run full Random Forest model
-vec = TfidfVectorizer(
+vec_rf = TfidfVectorizer(
     norm='l2', encoding='utf-8', 
     ngram_range = (1,2), stop_words = 'english', 
     max_df = .8, min_df = 3, 
@@ -134,10 +136,9 @@ vec = TfidfVectorizer(
     strip_accents = 'ascii', lowercase=True
     )
 
-features = vec.fit_transform(df.paragraphs).toarray()
-labels = df.code
+features_rf = vec_rf.fit_transform(df.paragraphs).toarray()
 X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
-    features, labels, random_state = 1234,test_size=0.3
+    features_rf, labels, random_state = 1234,test_size=0.3
     )
 
 RF_BestParams = rf_gridsearch(scores, X_train_rf, y_train_rf)
@@ -145,7 +146,7 @@ rf = RandomForestClassifier(**RF_BestParams, class_weight = {0:.1, 1:.9}).fit(X_
 pickle.dump(rf, open('Saves/rf.pkl', 'wb'))
 
 # Run full XGBoost model
-vec = StemmedCountVectorizer(
+vec_xgb = StemmedCountVectorizer(
     encoding='utf-8', ngram_range = (1,1), 
     stop_words = 'english', 
     max_df = .8, min_df = 3, 
@@ -153,10 +154,9 @@ vec = StemmedCountVectorizer(
     strip_accents = 'ascii', lowercase=True
     )
 
-features = vec.fit_transform(df.paragraphs).toarray()
-labels = df.code
+features_xgb = vec_xgb.fit_transform(df.paragraphs).toarray()
 X_train_xgb, X_test_xgb, y_train_xgb, y_test_xgb = train_test_split(
-    features, labels, random_state = 1234,test_size=0.3
+    features_xgb, labels, random_state = 1234,test_size=0.3
     )
 
 XGB_BestParams = xgb_gridsearch(X_train_xgb, y_train_xgb, X_test_xgb, y_test_xgb)
@@ -195,11 +195,54 @@ line2, = ax1.plot(rf_confidence['obs_perc'], rf_confidence['acc'], color='tab:bl
 line3, = ax1.plot(xgb_confidence['obs_perc'], xgb_confidence['acc'], color='tab:green', label ='XGBoost')
 ax1.legend(handles=[line1, line2, line3], loc = 4)
 
-
-#plt.savefig('f1score.pdf',bbox_inches='tight')
+plt.savefig('MAC_Performance.pdf',bbox_inches='tight')
 plt.show()
 
+# Test on full set
+for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .574, vec_rf)
+for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
+# Draw another sample for training labelling
+temp = []
+window = 0
+while len(temp) < 500:
+    temp = list(np.where((for_hand_rf['pp_1'] > .5 - window) & (for_hand_rf['pp_1'] < .5 + window))[0])
+    window = window + .000001
+
+df_unconf = df_test.iloc[temp]
+df_unconf.to_csv(r'Downloading&Coding/Exported/training_2.csv', index = False)
+
+# Create file for final hand-coding
+df_coded = coded_rf[coded_rf['code'] == 1]
+
+temp = df_coded.groupby(['article_index', 'Title','Date','Source.Name'])['paragraphs'].agg('\n'.join).reset_index()
+temp['year'] = [int(x[0:4]) for x in temp['Date']]
+                
+prop_nouns = [] 
+for paragraph in temp['paragraphs']:
+    prop_nouns.append(list(set(ProperNounExtractor(paragraph))))
+    
+temp['prop_nouns'] = prop_nouns
+df_prop = temp.explode('prop_nouns').reset_index(drop=True)
+df_prop['paragraphs'] = [x[0:32000] for x in df_prop['paragraphs']]
+
+removals = df_prop['prop_nouns'].value_counts().reset_index()
+#removals.to_csv('Downloading&Coding/Exported/removals.csv')
+
+df_removals = pd.read_csv('Downloading&Coding/Exported/removals.csv')
+df_removals = df_removals[df_removals['country'] == 1]
+
+df_propmerge = df_removals.merge(df_prop, left_on = 'index', right_on = 'prop_nouns')
+df_propmerge = df_propmerge.drop_duplicates(subset=['country_name','article_index'])
+df_propmerge['paragraphs'] = df_propmerge[['article_index', 'paragraphs']].apply(lambda row: '\n'.join(row.values.astype(str)), axis=1)
+
+df_final = df_propmerge.groupby(['year','country_name'])['paragraphs'].agg('\n--------------------------------------------------\n'.join).reset_index()
+df_final['output'] = df_final[['year', 'country_name']].apply(lambda row: ' '.join(row.values.astype(str)), axis=1)
+df_final['output'] = df_final[['output','paragraphs']].apply(lambda row: ':\n'.join(row.values.astype(str)), axis=1)
+
+df_final['output'].to_csv('Downloading&Coding/Exported/final_articles.txt', sep =' ', index = False)
+df_final[['year','country_name']].to_csv('Downloading&Coding/Exported/final_articles.csv')
 
 
 

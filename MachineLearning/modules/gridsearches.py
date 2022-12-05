@@ -80,7 +80,7 @@ def rf_gridsearch(scores, X_train, y_train):
             random_grid, 
             scoring='%s_macro' % score, 
             cv = 5,
-            n_iter = 50
+            n_iter = 500
             )
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
@@ -209,7 +209,7 @@ def xgb_gridsearch(X_train, y_train, X_test, y_test):
     best_hyperparams = fmin(fn = objective,
                             space = space,
                             algo = tpe.suggest,
-                            max_evals = 500,
+                            max_evals = 2000,
                             trials = trials)
     best_hyperparams['max_depth'] = round(best_hyperparams['max_depth'])
     return(best_hyperparams)

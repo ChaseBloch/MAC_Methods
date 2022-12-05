@@ -210,3 +210,13 @@ def confidence_measures(predicted_prob, X_test, y_test, pred1):
     metr_df = pd.DataFrame(list(zip(counter, obs, obs_perc, acc, f1, prec, rec)), columns = ('counter','obs', 'obs_perc', 'acc', 'f1', 'prec', 'rec'))
     return metr_df 
 
+def extract_forhand(df, df_test, rf, threshold, vec_rf):
+    features_test = vec_rf.transform(df_test.paragraphs).toarray()
+    pred_test = rf.predict(features_test)
+    predicted_prob_test = rf.predict_proba(features_test)
+    df_test['code'] = pred_test
+    df_test['pp_1'] = predicted_prob_test[:,1]
+    coded_index = np.where(predicted_prob_test > threshold)[0]
+    coded = pd.concat([df_test.iloc[coded_index], df])
+    for_hand = df_test.iloc[~df_test.index.isin(coded_index)]
+    return for_hand, coded
