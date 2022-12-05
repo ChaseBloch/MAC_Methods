@@ -49,6 +49,7 @@ def svc_gridsearch_sens(score, X_train, y_train):
     svc_best_params = clf.best_params_
     return(svc_best_params)
 
+'''
 # Random Forest grid searches
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 # Number of features to consider at every split
@@ -62,13 +63,30 @@ min_samples_split = [2, 5, 10]
 min_samples_leaf = [1, 2, 4]
 # Method of selecting samples for training each tree
 bootstrap = [True, False]
+'''
+
+# Random Forest grid searches
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 1000, num = 5)]
+# Number of features to consider at every split
+max_features = ['auto']
+# Maximum number of levels in tree
+max_depth = [int(x) for x in np.linspace(20, 80, num = 5)]
+max_depth.append(None)
+# Minimum number of samples required to split a node
+min_samples_split = [2, 5, 10]
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [1, 2, 4]
+# Method of selecting samples for training each tree
+bootstrap = [False]
+class_weight =[{0:.14, 1:.86},{0:.12, 1:.88},{0:.1, 1:.9},{0:.08, 1:.92},{0:.06, 1:.94}]
 
 random_grid = {'n_estimators': n_estimators,
                'max_features': max_features,
                'max_depth': max_depth,
                'min_samples_split': min_samples_split,
                'min_samples_leaf': min_samples_leaf,
-               'bootstrap': bootstrap}
+               'bootstrap': bootstrap,
+               'class_weight': class_weight}
 
 
 def rf_gridsearch(scores, X_train, y_train):
@@ -76,7 +94,7 @@ def rf_gridsearch(scores, X_train, y_train):
         print("# Tuning hyper-parameters for %s" % score)
         print()
         clf = RandomizedSearchCV(
-            RandomForestClassifier(class_weight = {0:.1, 1:.9}), 
+            RandomForestClassifier(), 
             random_grid, 
             scoring='%s_macro' % score, 
             cv = 5,

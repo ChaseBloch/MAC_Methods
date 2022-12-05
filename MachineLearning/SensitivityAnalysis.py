@@ -210,7 +210,7 @@ while len(temp) < 500:
     temp = list(np.where((for_hand_rf['pp_1'] > .5 - window) & (for_hand_rf['pp_1'] < .5 + window))[0])
     window = window + .000001
 
-df_unconf = df_test.iloc[temp]
+df_unconf = for_hand_rf.iloc[temp]
 df_unconf.to_csv(r'Downloading&Coding/Exported/training_2.csv', index = False)
 
 # Create file for final hand-coding
