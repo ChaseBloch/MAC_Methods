@@ -8,8 +8,6 @@ import os
 import re
 import pandas as pd
 
-from modules.cleaning import clean_multi, nodup_sample
-
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods'
          r'\MachineLearning\Downloading&Coding\Exported')
 
@@ -41,5 +39,5 @@ for filename in res:
 df = df[df['code'].notna()].reset_index()
 df_test = df_test[~df_test.par_number.isin(df.par_number)].reset_index()
 
-df.to_csv('df_train.csv')
-df_test.to_csv('df_test.csv')
+df.to_csv('df_train_2.csv')
+df_test.to_csv('df_test_2.csv')
