@@ -14,19 +14,27 @@ from sklearn.metrics import (f1_score, precision_score,
 from sklearn import metrics
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
+import xgboost as xgb
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
          r'\MACoding\MAC_Methods\MachineLearning')
 
 # Local modules
-from modules.gridsearches import svc_gridsearch
+from modules.gridsearches import svc_gridsearch, rf_gridsearch_sens, nb_gridsearch_sens, lr_gridsearch_sens, xgb_gridsearch, svc_gridsearch, rf_gridsearch
 from modules.nltk_stemmer import StemmedCountVectorizer, ProperNounExtractor
+from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 
-df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
-df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test.csv')
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train_2.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_2.csv')
 
-#Run Full Model
-vec = StemmedCountVectorizer(
+scores = ['f1']
+labels = df.code
+
+# Run Full SVC Model
+vec_svc = StemmedCountVectorizer(
     #norm='l2',
     encoding='utf-8', 
     stop_words='english',
@@ -35,86 +43,104 @@ vec = StemmedCountVectorizer(
     strip_accents = 'ascii', lowercase=True
     )
 
-features = vec.fit_transform(df.paragraphs).toarray()
-labels = df.code
-X_train, X_test, y_train, y_test = train_test_split(
-    features, labels, random_state = 1234,test_size=0.3
+features_svc = vec_svc.fit_transform(df.paragraphs).toarray()
+
+X_train_svc, X_test_svc, y_train_svc, y_test_svc = train_test_split(
+    features_svc, labels, random_state = 1234,test_size=0.3
     )
 
-score = 'f1'
-SVC_BestParams = svc_gridsearch(score, X_train, y_train)
+SVC_BestParams = svc_gridsearch(scores, X_train_svc, y_train_svc)
+svc = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit(X_train_svc, y_train_svc)
+pickle.dump(svc, open('Saves/svc.pkl', 'wb'))
 
-clf = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit(X_train, y_train)
+# Run full Random Forest model
+vec_rf = TfidfVectorizer(
+    norm='l2', encoding='utf-8', 
+    ngram_range = (1,2), stop_words = 'english', 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    )
 
-pred1 = clf.predict(X_test)
-predicted_prob = clf.predict_proba(X_test)
-print(accuracy_score(y_test, pred1))
-print(f1_score(y_test, pred1, average="macro"))
-print(precision_score(y_test, pred1, average="macro"))
-print(recall_score(y_test, pred1, average="macro"))
-cm = confusion_matrix(y_test, pred1)
-cm_display = ConfusionMatrixDisplay(confusion_matrix = cm, display_labels = [False, True])
+features_rf = vec_rf.fit_transform(df.paragraphs).toarray()
+X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
+    features_rf, labels, random_state = 1234,test_size=0.3
+    )
 
-cm_display.plot()
-plt.show()
+RF_BestParams = rf_gridsearch(scores, X_train_rf, y_train_rf)
+rf = RandomForestClassifier(**RF_BestParams, class_weight = {0:.1, 1:.9}).fit(X_train_rf, y_train_rf)
+pickle.dump(rf, open('Saves/rf_2.pkl', 'wb'))
+
+# Run full XGBoost model
+vec_xgb = StemmedCountVectorizer(
+    encoding='utf-8', ngram_range = (1,1), 
+    stop_words = 'english', 
+    max_df = .8, min_df = 3, 
+    max_features=60000, 
+    strip_accents = 'ascii', lowercase=True
+    )
+
+features_xgb = vec_xgb.fit_transform(df.paragraphs).toarray()
+X_train_xgb, X_test_xgb, y_train_xgb, y_test_xgb = train_test_split(
+    features_xgb, labels, random_state = 1234,test_size=0.3
+    )
+
+XGB_BestParams = xgb_gridsearch(X_train_xgb, y_train_xgb, X_test_xgb, y_test_xgb)
+xgb = xgb.XGBClassifier(**XGB_BestParams).fit(X_train_xgb, y_train_xgb)
+pickle.dump(xgb, open('Saves/xgb.pkl', 'wb'))
+
+# Reload saved models
+svc = pickle.load(open('Saves/svc.pkl', 'rb'))
+rf = pickle.load(open('Saves/rf_2.pkl', 'rb'))
+xgb = pickle.load(open('Saves/xgb.pkl', 'rb'))
+
+svc_pred = svc.predict(X_test_svc)
+svc_predicted_prob = svc.predict_proba(X_test_svc)
+svc_confidence = confidence_measures(svc_predicted_prob, X_test_svc, y_test_svc, svc_pred)
+
+rf_pred = rf.predict(X_test_rf)
+rf_predicted_prob = rf.predict_proba(X_test_rf)
+rf_confidence = confidence_measures(rf_predicted_prob, X_test_rf, y_test_rf, rf_pred)
+
+xgb_pred = xgb.predict(X_test_xgb)
+xgb_predicted_prob = xgb.predict_proba(X_test_xgb)
+xgb_confidence = confidence_measures(xgb_predicted_prob, X_test_xgb, y_test_xgb, xgb_pred)
 
 
-#Confusion matrix after low predicted probability removed.
-counter = np.arange(0.01,0.96,0.01)
-lcount = len(counter)
-f1=[]
-prec=[]
-rec=[]
-obs=[]
-obs_perc=[]
-acc=[]
-for i in range(lcount):
-
-    indexNames_1 = np.where(predicted_prob>counter[i])
-    indexNames_col_1 = np.unique(indexNames_1[0])
-    y_test_new = np.take(y_test,indexNames_col_1)
-    y_pred_new = np.take(pred1,indexNames_col_1)
-
-    obs.append(len(indexNames_col_1))
-    obs_perc.append(len(indexNames_col_1)/len(X_test))
-    acc.append(metrics.accuracy_score(y_test_new,y_pred_new))
-    f1.append(metrics.f1_score(y_test_new,y_pred_new,average='macro'))
-    prec.append(metrics.precision_score(y_test_new,y_pred_new,average='macro'))
-    rec.append(metrics.recall_score(y_test_new,y_pred_new,average='macro'))
-    
-metr_df = pd.DataFrame(list(zip(counter, obs, obs_perc, acc, f1, prec, rec)), columns = ('counter','obs', 'obs_perc', 'acc', 'f1', 'prec', 'rec'))
-
-#Figure 4 F1 Score as Predicted Probabilty Threshold Increases
 fig, ax1 = plt.subplots()
 
 color = 'tab:red'
-ax1.set_xlabel('Predicted Probability Threshold')
-ax1.set_ylabel('F1', color=color)
-ax1.plot(counter, f1, color=color)
+ax1.set_xlabel('Percent of Observations Coded')
+ax1.invert_xaxis()
+plt.xticks(np.arange(0, 1.1, .1))
+plt.yticks(np.arange(.9, 1.01, .01))
+plt.axhline(y = 0.95, color = 'black', linestyle = 'dashed')
+ax1.set_ylabel('Accuracy')
+line1, = ax1.plot(svc_confidence['obs_perc'], svc_confidence['acc'], color='tab:red', label = 'SVC')
+line2, = ax1.plot(rf_confidence['obs_perc'], rf_confidence['acc'], color='tab:blue', label = 'Random Forest')
+line3, = ax1.plot(xgb_confidence['obs_perc'], xgb_confidence['acc'], color='tab:green', label ='XGBoost')
+ax1.legend(handles=[line1, line2, line3], loc = 4)
 
-ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-
-color = 'tab:blue'
-ax2.set_ylabel('Number of Observations', color=color)  # we already handled the x-label with ax1
-ax2.plot(counter, obs, color=color)
-
-fig.tight_layout()  # otherwise the right y-label is slightly clipped
-plt.savefig('f1score.pdf',bbox_inches='tight')
+plt.savefig('MAC_Performance.pdf',bbox_inches='tight')
 plt.show()
 
+# Test on full set
+for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .574, vec_rf)
+for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
-#Test on full set
-features_test = vec.transform(df_test.paragraphs).toarray()
-pred_test = clf.predict(features_test)
-predicted_prob_test = clf.predict_proba(features_test)
-df_test['code'] = pred_test
-threshold = .77 # Set this value to reach desired threshold
-coded_index = np.where(predicted_prob_test > threshold)[0]
-coded = pd.concat([df_test.iloc[coded_index], df])
-for_hand = df_test.iloc[~df_test.index.isin(coded_index)]
+# Draw another sample for training labelling
+temp = []
+window = 0
+while len(temp) < 500:
+    temp = list(np.where((for_hand_rf['pp_1'] > .5 - window) & (for_hand_rf['pp_1'] < .5 + window))[0])
+    window = window + .000001
 
+df_unconf = for_hand_rf.iloc[temp]
+df_unconf.to_csv(r'Downloading&Coding/Exported/training_2.csv', index = False)
 
-df_coded = coded[coded['code'] == 1]
+# Create file for final hand-coding
+df_coded = coded_rf[coded_rf['code'] == 1]
 
 temp = df_coded.groupby(['article_index', 'Title','Date','Source.Name'])['paragraphs'].agg('\n'.join).reset_index()
 temp['year'] = [int(x[0:4]) for x in temp['Date']]
