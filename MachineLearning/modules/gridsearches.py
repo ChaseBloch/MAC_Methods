@@ -49,7 +49,7 @@ def svc_gridsearch_sens(score, X_train, y_train):
     svc_best_params = clf.best_params_
     return(svc_best_params)
 
-'''
+
 # Random Forest grid searches
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 # Number of features to consider at every split
@@ -63,8 +63,8 @@ min_samples_split = [2, 5, 10]
 min_samples_leaf = [1, 2, 4]
 # Method of selecting samples for training each tree
 bootstrap = [True, False]
-'''
 
+'''
 # Random Forest grid searches
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 1000, num = 5)]
 # Number of features to consider at every split
@@ -79,14 +79,13 @@ min_samples_leaf = [1, 2, 4]
 # Method of selecting samples for training each tree
 bootstrap = [False]
 class_weight =[{0:.14, 1:.86},{0:.12, 1:.88},{0:.1, 1:.9},{0:.08, 1:.92},{0:.06, 1:.94}]
-
+'''
 random_grid = {'n_estimators': n_estimators,
                'max_features': max_features,
                'max_depth': max_depth,
                'min_samples_split': min_samples_split,
                'min_samples_leaf': min_samples_leaf,
-               'bootstrap': bootstrap,
-               'class_weight': class_weight}
+               'bootstrap': bootstrap}
 
 
 def rf_gridsearch(scores, X_train, y_train):
@@ -94,11 +93,13 @@ def rf_gridsearch(scores, X_train, y_train):
         print("# Tuning hyper-parameters for %s" % score)
         print()
         clf = RandomizedSearchCV(
-            RandomForestClassifier(), 
+            RandomForestClassifier(class_weight = {0:.24,1:.76}), 
             random_grid, 
-            scoring='%s_macro' % score, 
+            scoring=score, 
             cv = 5,
-            n_iter = 500
+            n_iter = 20,
+            n_jobs = -1,
+            verbose = 3
             )
         clf.fit(X_train, y_train)
         rf_best_params = clf.best_params_
@@ -227,7 +228,7 @@ def xgb_gridsearch(X_train, y_train, X_test, y_test):
     best_hyperparams = fmin(fn = objective,
                             space = space,
                             algo = tpe.suggest,
-                            max_evals = 2000,
+                            max_evals = 200,
                             trials = trials)
     best_hyperparams['max_depth'] = round(best_hyperparams['max_depth'])
     return(best_hyperparams)

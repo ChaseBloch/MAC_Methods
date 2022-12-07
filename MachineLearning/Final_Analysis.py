@@ -30,7 +30,7 @@ from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plo
 df = pd.read_csv(r'Downloading&Coding/Exported/df_train_2.csv')
 df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_2.csv')
 
-scores = ['f1']
+scores = ['f1_macro']
 labels = df.code
 
 # Run Full SVC Model
@@ -51,7 +51,7 @@ X_train_svc, X_test_svc, y_train_svc, y_test_svc = train_test_split(
 
 SVC_BestParams = svc_gridsearch(scores, X_train_svc, y_train_svc)
 svc = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit(X_train_svc, y_train_svc)
-pickle.dump(svc, open('Saves/svc.pkl', 'wb'))
+#pickle.dump(svc, open('Saves/svc.pkl', 'wb'))
 
 # Run full Random Forest model
 vec_rf = TfidfVectorizer(
@@ -68,8 +68,8 @@ X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
     )
 
 RF_BestParams = rf_gridsearch(scores, X_train_rf, y_train_rf)
-rf = RandomForestClassifier(**RF_BestParams, class_weight = {0:.1, 1:.9}).fit(X_train_rf, y_train_rf)
-pickle.dump(rf, open('Saves/rf_2.pkl', 'wb'))
+rf = RandomForestClassifier(**RF_BestParams, class_weight = {0:.24, 1:.76}, n_jobs = -1).fit(X_train_rf, y_train_rf)
+#pickle.dump(rf, open('Saves/rf_2.pkl', 'wb'))
 
 # Run full XGBoost model
 vec_xgb = StemmedCountVectorizer(
@@ -87,7 +87,7 @@ X_train_xgb, X_test_xgb, y_train_xgb, y_test_xgb = train_test_split(
 
 XGB_BestParams = xgb_gridsearch(X_train_xgb, y_train_xgb, X_test_xgb, y_test_xgb)
 xgb = xgb.XGBClassifier(**XGB_BestParams).fit(X_train_xgb, y_train_xgb)
-pickle.dump(xgb, open('Saves/xgb.pkl', 'wb'))
+#pickle.dump(xgb, open('Saves/xgb.pkl', 'wb'))
 
 # Reload saved models
 svc = pickle.load(open('Saves/svc.pkl', 'rb'))
@@ -101,6 +101,12 @@ svc_confidence = confidence_measures(svc_predicted_prob, X_test_svc, y_test_svc,
 rf_pred = rf.predict(X_test_rf)
 rf_predicted_prob = rf.predict_proba(X_test_rf)
 rf_confidence = confidence_measures(rf_predicted_prob, X_test_rf, y_test_rf, rf_pred)
+
+rf_cm = confusion_matrix(y_test_rf, rf_pred)
+rf_display = ConfusionMatrixDisplay(confusion_matrix = rf_cm, display_labels = [False, True])
+rf_display.plot()
+plt.show()
+
 
 xgb_pred = xgb.predict(X_test_xgb)
 xgb_predicted_prob = xgb.predict_proba(X_test_xgb)
@@ -116,17 +122,17 @@ plt.xticks(np.arange(0, 1.1, .1))
 plt.yticks(np.arange(.9, 1.01, .01))
 plt.axhline(y = 0.95, color = 'black', linestyle = 'dashed')
 ax1.set_ylabel('Accuracy')
-line1, = ax1.plot(svc_confidence['obs_perc'], svc_confidence['acc'], color='tab:red', label = 'SVC')
+#line1, = ax1.plot(svc_confidence['obs_perc'], svc_confidence['acc'], color='tab:red', label = 'SVC')
 line2, = ax1.plot(rf_confidence['obs_perc'], rf_confidence['acc'], color='tab:blue', label = 'Random Forest')
-line3, = ax1.plot(xgb_confidence['obs_perc'], xgb_confidence['acc'], color='tab:green', label ='XGBoost')
-ax1.legend(handles=[line1, line2, line3], loc = 4)
+#line3, = ax1.plot(xgb_confidence['obs_perc'], xgb_confidence['acc'], color='tab:green', label ='XGBoost')
+ax1.legend(handles=[line2], loc = 4)
 
-plt.savefig('MAC_Performance.pdf',bbox_inches='tight')
+#plt.savefig('MAC_Performance.pdf',bbox_inches='tight')
 plt.show()
 
 # Test on full set
 for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
-for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .574, vec_rf)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .641, vec_rf)
 for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
 # Draw another sample for training labelling
