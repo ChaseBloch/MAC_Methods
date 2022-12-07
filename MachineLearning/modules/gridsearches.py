@@ -93,11 +93,11 @@ def rf_gridsearch(scores, X_train, y_train):
         print("# Tuning hyper-parameters for %s" % score)
         print()
         clf = RandomizedSearchCV(
-            RandomForestClassifier(class_weight = {0:.24,1:.76}), 
+            RandomForestClassifier(class_weight = {0:.24,1:.76}, n_jobs = -1), 
             random_grid, 
             scoring=score, 
             cv = 5,
-            n_iter = 20,
+            n_iter = 100,
             n_jobs = -1,
             verbose = 3
             )

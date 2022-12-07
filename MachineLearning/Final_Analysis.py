@@ -91,7 +91,7 @@ xgb = xgb.XGBClassifier(**XGB_BestParams).fit(X_train_xgb, y_train_xgb)
 
 # Reload saved models
 svc = pickle.load(open('Saves/svc.pkl', 'rb'))
-rf = pickle.load(open('Saves/rf_2.pkl', 'rb'))
+rf = pickle.load(open('Saves/rf.pkl', 'rb'))
 xgb = pickle.load(open('Saves/xgb.pkl', 'rb'))
 
 svc_pred = svc.predict(X_test_svc)
@@ -132,7 +132,7 @@ plt.show()
 
 # Test on full set
 for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
-for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .641, vec_rf)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .625, vec_rf)
 for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
 # Draw another sample for training labelling
