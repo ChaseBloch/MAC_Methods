@@ -27,8 +27,8 @@ from modules.gridsearches import svc_gridsearch, rf_gridsearch_sens, nb_gridsear
 from modules.nltk_stemmer import StemmedCountVectorizer, ProperNounExtractor
 from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 
-df = pd.read_csv(r'Downloading&Coding/Exported/df_train_2.csv')
-df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_2.csv')
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test.csv')
 
 scores = ['f1_macro']
 labels = df.code
@@ -132,18 +132,24 @@ plt.show()
 
 # Test on full set
 for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
-for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .625, vec_rf)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .574, vec_rf)
 for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
 # Draw another sample for training labelling
+df_prior_train = pd.read_csv(r'Downloading&Coding/Exported/ForCode_2_training.csv')
 temp = []
-window = 0
-while len(temp) < 500:
+df_unconf_final = []
+window = .0
+while len(df_unconf_final) < 500:
     temp = list(np.where((for_hand_rf['pp_1'] > .5 - window) & (for_hand_rf['pp_1'] < .5 + window))[0])
+    df_unconf = for_hand_rf.iloc[temp]
+    df_unconf_final = df_unconf[
+        ~df_unconf['par_number'].isin(df_prior_train['par_number'])
+        ]
     window = window + .000001
 
-df_unconf = for_hand_rf.iloc[temp]
-df_unconf.to_csv(r'Downloading&Coding/Exported/training_2.csv', index = False)
+
+df_unconf_final.to_csv(r'Downloading&Coding/Exported/ForCode_3_training.csv', index = False)
 
 # Create file for final hand-coding
 df_coded = coded_rf[coded_rf['code'] == 1]
