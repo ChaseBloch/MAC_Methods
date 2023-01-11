@@ -91,13 +91,22 @@ xgb = xgb.XGBClassifier(**XGB_BestParams).fit(X_train_xgb, y_train_xgb)
 
 # Reload saved models
 svc = pickle.load(open('Saves/svc.pkl', 'rb'))
-rf = pickle.load(open('Saves/rf.pkl', 'rb'))
+rf = pickle.load(open('Saves/rf_3.pkl', 'rb'))
 xgb = pickle.load(open('Saves/xgb.pkl', 'rb'))
 
 svc_pred = svc.predict(X_test_svc)
 svc_predicted_prob = svc.predict_proba(X_test_svc)
 svc_confidence = confidence_measures(svc_predicted_prob, X_test_svc, y_test_svc, svc_pred)
 
+#Run on original test set
+ori_test = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
+features_test = vec_rf.transform(ori_test.paragraphs).toarray()
+labels_test = ori_test.code
+X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
+    features_test, labels_test, random_state = 1234,test_size=0.3
+    )
+
+#Run RF metrics
 rf_pred = rf.predict(X_test_rf)
 rf_predicted_prob = rf.predict_proba(X_test_rf)
 rf_confidence = confidence_measures(rf_predicted_prob, X_test_rf, y_test_rf, rf_pred)
@@ -132,11 +141,15 @@ plt.show()
 
 # Test on full set
 for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
-for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .574, vec_rf)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .5, vec_rf)
 for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
 # Draw another sample for training labelling
-df_prior_train = pd.read_csv(r'Downloading&Coding/Exported/ForCode_2_training.csv')
+df_prior_trains = [
+    pd.read_csv(r'Downloading&Coding/Exported/ForCode_2_training.csv'), 
+    pd.read_csv(r'Downloading&Coding/Exported/ForCode_3_training.csv')
+    ]
+df_prior_train = pd.concat(df_prior_trains, axis=0, ignore_index=True)
 temp = []
 df_unconf_final = []
 window = .0
@@ -149,7 +162,7 @@ while len(df_unconf_final) < 500:
     window = window + .000001
 
 
-df_unconf_final.to_csv(r'Downloading&Coding/Exported/ForCode_3_training.csv', index = False)
+df_unconf_final.to_csv(r'Downloading&Coding/Exported/ForCode_4_training.csv', index = False)
 
 # Create file for final hand-coding
 df_coded = coded_rf[coded_rf['code'] == 1]

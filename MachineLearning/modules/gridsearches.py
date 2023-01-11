@@ -98,7 +98,7 @@ def rf_gridsearch(scores, X_train, y_train):
             scoring=score, 
             cv = 5,
             n_iter = 100,
-            n_jobs = -1,
+            n_jobs = 1,
             verbose = 3
             )
         clf.fit(X_train, y_train)
