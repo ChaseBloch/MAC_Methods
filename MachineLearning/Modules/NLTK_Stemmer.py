@@ -29,7 +29,10 @@ def ProperNounExtractor(text):
         words = nltk.word_tokenize(sentence)
         words=[word for word in words if word.isalpha() if word not in set(stopwords.words('english'))]
         tagged = nltk.pos_tag(words)
-        for (word, tag) in tagged:
-            if tag == 'NNP': # If the word is a proper noun
-                output.append(word)
+        for i in range(len(tagged)):
+            if tagged[i][1] == 'NNP': # If the word is a proper noun
+                output.append(tagged[i][0])
+        for i in range(len(tagged)-1):
+            if (tagged[i][1] == 'NNP') & (tagged[i+1][1] == 'NNP'):
+                output.append(tagged[i][0] + ' ' + tagged[i+1][0])
     return(output)

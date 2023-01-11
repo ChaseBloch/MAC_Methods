@@ -141,7 +141,7 @@ plt.show()
 
 # Test on full set
 for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
-for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .5, vec_rf)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .50, vec_rf)
 for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
 # Draw another sample for training labelling
@@ -161,8 +161,8 @@ while len(df_unconf_final) < 500:
         ]
     window = window + .000001
 
-
 df_unconf_final.to_csv(r'Downloading&Coding/Exported/ForCode_4_training.csv', index = False)
+coded_rf.to_csv(r'Downloading&Coding/Exported/Final_Coded.csv', index = False)
 
 # Create file for final hand-coding
 df_coded = coded_rf[coded_rf['code'] == 1]
@@ -179,8 +179,9 @@ df_prop = temp.explode('prop_nouns').reset_index(drop=True)
 df_prop['paragraphs'] = [x[0:32000] for x in df_prop['paragraphs']]
 
 removals = df_prop['prop_nouns'].value_counts().reset_index()
-#removals.to_csv('Downloading&Coding/Exported/removals.csv')
+removals.to_csv('Downloading&Coding/Exported/removals.csv')
 
+# Reimport removals and export final country-year dataset 
 df_removals = pd.read_csv('Downloading&Coding/Exported/removals.csv')
 df_removals = df_removals[df_removals['country'] == 1]
 
