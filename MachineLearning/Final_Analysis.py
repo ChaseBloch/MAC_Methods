@@ -27,8 +27,8 @@ from modules.gridsearches import svc_gridsearch, rf_gridsearch_sens, nb_gridsear
 from modules.NLTK_Stemmer import StemmedCountVectorizer, ProperNounExtractor
 from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 
-df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
-df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test.csv')
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train_1.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_1.csv')
 
 scores = ['f1_macro']
 labels = df.code
@@ -49,7 +49,7 @@ X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
 
 RF_BestParams = rf_gridsearch(scores, X_train_rf, y_train_rf)
 rf = RandomForestClassifier(**RF_BestParams, class_weight = {0:.24, 1:.76}, n_jobs = -1).fit(X_train_rf, y_train_rf)
-pickle.dump(rf, open('Saves/rf_3.pkl', 'wb'))
+pickle.dump(rf, open('Saves/rf_1-2.pkl', 'wb'))
 
 # Run Full SVC Model
 vec_svc = StemmedCountVectorizer(

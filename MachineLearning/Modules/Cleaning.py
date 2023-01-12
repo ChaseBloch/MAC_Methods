@@ -47,8 +47,7 @@ def clean_multi(inpath, outpath):
                           'Source.Name'
                           ]]
             
-            # Remove NA values, duplicates, and add an index for each article.
-            df = df.drop_duplicates(subset = ['Source.Name','Title','Date'])
+            # Remove NA values and add an index for each article.
             df_full_nona = df_full[df_full['Document.Content'].notna()]
             df_full_nona['article_index'] = [
                 str(m) + str(x) for x in list(range(len(df_full_nona)))
