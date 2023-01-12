@@ -24,7 +24,7 @@ import numpy as np
 from sklearn.naive_bayes import MultinomialNB
 from xgboost import XGBClassifier
 
-from modules.nltk_stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
+from modules.NLTK_Stemmer import StemmedTfidfVectorizer, StemmedCountVectorizer
     
 vectorizer = [
 # Baseline

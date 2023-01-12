@@ -9,7 +9,9 @@ import re
 import pandas as pd
 
 os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation\MACoding\MAC_Methods'
-         r'\MachineLearning\Downloading&Coding\Exported')
+         r'\MachineLearning')
+
+from modules.Cleaning import clean_multi, nodup_sample
 
 outpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation/MACoding/'
            r'MAC_Methods/MachineLearning/Downloading&Coding/Exported/')
@@ -17,7 +19,7 @@ inpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation\MACoding/'
           r'MAC_Methods/MachineLearning/Downloading&Coding/Downloaded/')
 
 # Importing and preparing datasets
-#clean_multi(inpath, outpath)
+clean_multi(inpath, outpath)
 #nodup_sample(inpath, outpath, 1500)
 
 # Re-import files and merge them after hand-coding

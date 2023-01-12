@@ -24,11 +24,11 @@ os.chdir(r'C:\Users\chase\GDrive\GD_Work\Dissertation'
 
 # Local modules
 from modules.gridsearches import svc_gridsearch, rf_gridsearch_sens, nb_gridsearch_sens, lr_gridsearch_sens, xgb_gridsearch, svc_gridsearch, rf_gridsearch
-from modules.nltk_stemmer import StemmedCountVectorizer, ProperNounExtractor
+from modules.NLTK_Stemmer import StemmedCountVectorizer, ProperNounExtractor
 from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 
-df = pd.read_csv(r'Downloading&Coding/Exported/df_train_3.csv')
-df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_3.csv')
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test.csv')
 
 scores = ['f1_macro']
 labels = df.code

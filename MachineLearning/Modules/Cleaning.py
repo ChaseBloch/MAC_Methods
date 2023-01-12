@@ -5,7 +5,7 @@ Created on Mon Aug  9 18:40:45 2021
 @author: chase
 """
 
-import pandas as pd
+import pandas as pd   
 import os
 import glob
 import re
@@ -17,6 +17,14 @@ from pathlib import Path
 ####################
 ###Merge Datasets###
 ####################
+
+'''
+outpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation/MACoding/'
+           r'MAC_Methods/MachineLearning/Downloading&Coding/Exported/')
+inpath = (r'C:/Users/chase/GDrive/GD_Work/Dissertation\MACoding/'
+          r'MAC_Methods/MachineLearning/Downloading&Coding/Downloaded/')
+'''
+
 def clean_multi(inpath, outpath):
     ori_dir = os.getcwd()
     os.chdir(inpath)
@@ -61,12 +69,7 @@ def clean_multi(inpath, outpath):
                         ''.join([idx for tup in groups[k] for idx in tup])  
                         )
                     article_number.append(str(m) + str(i))
-            
-            # Remove paragraphs with less than 200 characters.   
-            paragraphs = [
-                l for l in paragraphs if len(l) > 200 & len(l) < 32000
-                ]
-            
+
             #Create dataset from cleaned news articles.
             temp_df = pd.DataFrame(
                 list(zip(paragraphs,article_number)), 
@@ -81,6 +84,9 @@ def clean_multi(inpath, outpath):
             
             # Use the following line to find specific substrings.
             #df = df[df['paragraphs'].str.contains('covert', case = False)] 
+            
+            df['str_len'] = [len(str) for str in df['paragraphs']]
+            df = df[(df['str_len'] > 200) & (df['str_len'] < 32000)]
             
             # Drop duplicates and unnecessary columns. 
             df = df.drop_duplicates(subset = ['Source.Name','paragraphs'])
