@@ -193,5 +193,5 @@ df_final = df_propmerge.groupby(['year','country_name'])['paragraphs'].agg('\n--
 df_final['output'] = df_final[['year', 'country_name']].apply(lambda row: ' '.join(row.values.astype(str)), axis=1)
 df_final['output'] = df_final[['output','paragraphs']].apply(lambda row: ':\n'.join(row.values.astype(str)), axis=1)
 
-df_final['output'].to_csv('Downloading&Coding/Exported/final_articles.txt', sep =' ', index = False)
+#df_final['output'].to_csv('Downloading&Coding/Exported/final_articles.txt', sep =' ', index = False)
 #df_final[['year','country_name']].to_csv('Downloading&Coding/Exported/final_articles.csv')

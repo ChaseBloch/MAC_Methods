@@ -58,7 +58,7 @@ def clean_multi(inpath, outpath):
                     groups = list(zip(*[iter(sentences)]*3))
                 for k in range(len(groups)):
                     paragraphs.append(
-                        ''.join([idx for tup in groups[k] for idx in tup])
+                        ''.join([idx for tup in groups[k] for idx in tup])  
                         )
                     article_number.append(str(m) + str(i))
             
