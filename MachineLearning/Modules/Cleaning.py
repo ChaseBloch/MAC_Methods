@@ -47,7 +47,8 @@ def clean_multi(inpath, outpath):
                           'Source.Name'
                           ]]
             
-            # Remove NA values and add an index for each article.
+            # Remove NA values, duplicates, and add an index for each article.
+            df = df.drop_duplicates(subset = ['Source.Name','Title','Date'])
             df_full_nona = df_full[df_full['Document.Content'].notna()]
             df_full_nona['article_index'] = [
                 str(m) + str(x) for x in list(range(len(df_full_nona)))
@@ -88,8 +89,7 @@ def clean_multi(inpath, outpath):
             df['str_len'] = [len(str) for str in df['paragraphs']]
             df = df[(df['str_len'] > 200) & (df['str_len'] < 32000)]
             
-            # Drop duplicates and unnecessary columns. 
-            df = df.drop_duplicates(subset = ['Source.Name','paragraphs'])
+            # Drop unnecessary columns. 
             df = df.drop(
                 columns = ['Document.Content','article_number'], 
                 axis = 1

@@ -22,6 +22,10 @@ for filename in res:
     li.append(df)
     df = pd.concat(li, axis=0, ignore_index=True)
 
-train1 = pd.read_csv('df_train.csv')
+train1 = pd.read_csv('df_train.csv')[['paragraphs','code']]
+train1_final = train1.merge(df, left_on=('paragraphs'), right_on=('paragraphs'))
+train1_nodups = train1_final.drop_duplicates(subset = ['article_index','par_number'])
+
+
 
 
