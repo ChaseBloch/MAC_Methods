@@ -50,8 +50,8 @@ df = pd.concat([train1_nodups, df], ignore_index = True)
 df = df.drop_duplicates(subset = ['paragraphs'], ignore_index = True) 
 df_test = df_test[~df_test.par_number.isin(df.par_number)].reset_index()
 
-df.to_csv('df_train_2.csv')
-df_test.to_csv('df_test_2.csv')
+df.to_csv('df_train_3.csv')
+df_test.to_csv('df_test_3.csv')
 
 train2 = pd.read_csv('ForCode_Temp_2_training.csv')[['paragraphs','code']]
 train2_final = train2.merge(df_full, how = 'inner', left_on=('paragraphs'), right_on=('paragraphs'))
@@ -71,9 +71,11 @@ train3_nodups.rename(columns = {'code_x':'code'}, inplace = True)
 train3_nodups.to_csv('train3.csv')
 
 
+remov1 = pd.read_csv('removals_bi.csv')
+remov2 = pd.read_csv('removals_bi_2.csv')
+remov = remov1.merge(remov2, how = 'outer', left_on = 'prop_nouns', right_on = 'prop_nouns')
 
-
-
+remov.to_csv('removals_merged.csv')
 
 
 

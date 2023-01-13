@@ -27,8 +27,8 @@ from modules.gridsearches import svc_gridsearch, rf_gridsearch_sens, nb_gridsear
 from modules.NLTK_Stemmer import StemmedCountVectorizer, ProperNounExtractor
 from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 
-df = pd.read_csv(r'Downloading&Coding/Exported/df_train_2.csv')
-df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_2.csv')
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train_3.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_3.csv')
 
 scores = ['f1_macro']
 labels = df.code
@@ -49,7 +49,7 @@ X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
 
 RF_BestParams = rf_gridsearch(scores, X_train_rf, y_train_rf)
 rf = RandomForestClassifier(**RF_BestParams, class_weight = {0:.24, 1:.76}, n_jobs = -1).fit(X_train_rf, y_train_rf)
-pickle.dump(rf, open('Saves/rf_2-2.pkl', 'wb'))
+pickle.dump(rf, open('Saves/rf_3-2.pkl', 'wb'))
 
 # Run Full SVC Model
 vec_svc = StemmedCountVectorizer(
@@ -141,7 +141,7 @@ plt.show()
 
 # Test on full set
 for_hand_svc, coded_svc = extract_forhand(df, df_test, svc, .783 ,vec_svc)
-for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .6, vec_rf)
+for_hand_rf, coded_rf = extract_forhand(df, df_test, rf, .5, vec_rf)
 for_hand_xgb, coded_xgb = extract_forhand(df, df_test, xgb, .564 ,vec_xgb)
 
 # Draw another sample for training labelling
@@ -179,10 +179,10 @@ df_prop = temp.explode('prop_nouns').reset_index(drop=True)
 df_prop['paragraphs'] = [x[0:32000] for x in df_prop['paragraphs']]
 
 removals = df_prop['prop_nouns'].value_counts().reset_index()
-#removals.to_csv('Downloading&Coding/Exported/removals_bi.csv')
+removals.to_csv('Downloading&Coding/Exported/removals_bi_2.csv')
 
 # Reimport removals and export final country-year dataset 
-df_removals = pd.read_csv('Downloading&Coding/Exported/removals_bi.csv')
+df_removals = pd.read_csv('Downloading&Coding/Exported/removals_merged.csv')
 df_removals = df_removals[df_removals['country'] == 1]
 
 df_propmerge = df_removals.merge(df_prop, left_on = 'prop_nouns', right_on = 'prop_nouns')
@@ -193,5 +193,5 @@ df_final = df_propmerge.groupby(['year','country_name'])['paragraphs'].agg('\n--
 df_final['output'] = df_final[['year', 'country_name']].apply(lambda row: ' '.join(row.values.astype(str)), axis=1)
 df_final['output'] = df_final[['output','paragraphs']].apply(lambda row: ':\n'.join(row.values.astype(str)), axis=1)
 
-#df_final['output'].to_csv('Downloading&Coding/Exported/final_articles.txt', sep =' ', index = False)
-#df_final[['year','country_name']].to_csv('Downloading&Coding/Exported/final_articles.csv')
+df_final['output'].to_csv('Downloading&Coding/Exported/final_articles.txt', sep =' ', index = False)
+df_final[['year','country_name']].to_csv('Downloading&Coding/Exported/final_articles.csv')
