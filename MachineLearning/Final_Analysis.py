@@ -187,11 +187,12 @@ df_removals = df_removals[df_removals['country'] == 1]
 
 df_propmerge = df_removals.merge(df_prop, left_on = 'prop_nouns', right_on = 'prop_nouns')
 df_propmerge = df_propmerge.drop_duplicates(subset=['country_name','article_index'])
-df_propmerge['paragraphs'] = df_propmerge[['article_index', 'paragraphs']].apply(lambda row: '\n'.join(row.values.astype(str)), axis=1)
+df_propmerge['article_header'] = df_propmerge[['article_index', 'country_name', 'year']].apply(lambda row: ' '.join(row.values.astype(str)), axis=1)
+df_propmerge['paragraphs'] = df_propmerge[['article_header', 'paragraphs']].apply(lambda row: '\n_____________________\n'.join(row.values.astype(str)), axis=1)
 
 df_final = df_propmerge.groupby(['year','country_name'])['paragraphs'].agg('\n--------------------------------------------------\n'.join).reset_index()
 df_final['output'] = df_final[['year', 'country_name']].apply(lambda row: ' '.join(row.values.astype(str)), axis=1)
-df_final['output'] = df_final[['output','paragraphs']].apply(lambda row: ':\n'.join(row.values.astype(str)), axis=1)
+df_final['output'] = df_final[['output','paragraphs']].apply(lambda row: ':\n\n'.join(row.values.astype(str)), axis=1)
 
-df_final['output'].to_csv('Downloading&Coding/Exported/final_articles.txt', sep =' ', index = False)
+df_final['output'].to_csv('Downloading&Coding/Exported/final_articles_2.txt', sep =' ', index = False)
 df_final[['year','country_name']].to_csv('Downloading&Coding/Exported/final_articles.csv')
