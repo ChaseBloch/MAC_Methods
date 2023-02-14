@@ -179,9 +179,6 @@ def preprocess_plots(preprocessing_scores, scores):
         plt.show()
     return fig, temp_df
 
-
-
-
 def confidence_measures(predicted_prob, X_test, y_test, pred1):
     
     counter = np.arange(0.5,0.96,0.001)

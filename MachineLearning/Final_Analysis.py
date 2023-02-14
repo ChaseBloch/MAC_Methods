@@ -27,8 +27,8 @@ from modules.gridsearches import svc_gridsearch, rf_gridsearch_sens, nb_gridsear
 from modules.NLTK_Stemmer import StemmedCountVectorizer, ProperNounExtractor
 from modules.preprocessing_decisions import sensitivity_analysis, preprocess_plots, confidence_measures, extract_forhand
 
-df = pd.read_csv(r'Downloading&Coding/Exported/df_train_3.csv')
-df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_3.csv')
+df = pd.read_csv(r'Downloading&Coding/Exported/df_train_1.csv')
+df_test = pd.read_csv(r'Downloading&Coding/Exported/df_test_1.csv')
 
 scores = ['f1_macro']
 labels = df.code
@@ -53,7 +53,6 @@ pickle.dump(rf, open('Saves/rf_3-2.pkl', 'wb'))
 
 # Run Full SVC Model
 vec_svc = StemmedCountVectorizer(
-    #norm='l2',
     encoding='utf-8', 
     stop_words='english',
     ngram_range = (1,1),
@@ -68,8 +67,8 @@ X_train_svc, X_test_svc, y_train_svc, y_test_svc = train_test_split(
     )
 
 SVC_BestParams = svc_gridsearch(scores, X_train_svc, y_train_svc)
-svc = SVC(**SVC_BestParams, class_weight = {0:.1, 1:.9}, probability = True).fit(X_train_svc, y_train_svc)
-#pickle.dump(svc, open('Saves/svc.pkl', 'wb'))
+svc = SVC(**SVC_BestParams, class_weight = {0:.24, 1:.76}, probability = True).fit(X_train_svc, y_train_svc)
+pickle.dump(svc, open('Saves/svc.pkl', 'wb'))
 
 # Run full XGBoost model
 vec_xgb = StemmedCountVectorizer(
@@ -86,42 +85,52 @@ X_train_xgb, X_test_xgb, y_train_xgb, y_test_xgb = train_test_split(
     )
 
 XGB_BestParams = xgb_gridsearch(X_train_xgb, y_train_xgb, X_test_xgb, y_test_xgb)
-xgb = xgb.XGBClassifier(**XGB_BestParams).fit(X_train_xgb, y_train_xgb)
-#pickle.dump(xgb, open('Saves/xgb.pkl', 'wb'))
+xgb_m = xgb.XGBClassifier(**XGB_BestParams, 
+                          eval_metric = "auc",  n_jobs = -1).fit(X_train_xgb, y_train_xgb)
+pickle.dump(xgb_m, open('Saves/xgb.pkl', 'wb'))
 
 # Reload saved models
 svc = pickle.load(open('Saves/svc.pkl', 'rb'))
-rf = pickle.load(open('Saves/rf_3.pkl', 'rb'))
-xgb = pickle.load(open('Saves/xgb.pkl', 'rb'))
+rf = pickle.load(open('Saves/rf_1.pkl', 'rb'))
+xgb_m = pickle.load(open('Saves/xgb.pkl', 'rb'))
 
+# Run SVC metrics
 svc_pred = svc.predict(X_test_svc)
 svc_predicted_prob = svc.predict_proba(X_test_svc)
 svc_confidence = confidence_measures(svc_predicted_prob, X_test_svc, y_test_svc, svc_pred)
+svc_confidence.to_csv('Plots&Tables/svc_confidence.csv')
 
-#Run on original test set
+# Run on original test set
 ori_test = pd.read_csv(r'Downloading&Coding/Exported/df_train_1.csv')
 features_test = vec_rf.transform(ori_test.paragraphs).toarray()
 labels_test = ori_test.code
 X_train_rf, X_test_rf, y_train_rf, y_test_rf = train_test_split(
     features_test, labels_test, random_state = 1234,test_size=0.3
     )
+features_test = vec_xgb.transform(ori_test.paragraphs).toarray()
+X_train_xgb, X_test_xgb, y_train_xgb, y_test_xgb = train_test_split(
+    features_test, labels_test, random_state = 1234,test_size=0.3
+    )
 
-#Run RF metrics
+# Run RF metrics
 rf_pred = rf.predict(X_test_rf)
 rf_predicted_prob = rf.predict_proba(X_test_rf)
 rf_confidence = confidence_measures(rf_predicted_prob, X_test_rf, y_test_rf, rf_pred)
+rf_confidence.to_csv('Plots&Tables/rf_confidence_1.csv')
 
 rf_cm = confusion_matrix(y_test_rf, rf_pred)
 rf_display = ConfusionMatrixDisplay(confusion_matrix = rf_cm, display_labels = [False, True])
 rf_display.plot()
 plt.show()
 
-
-xgb_pred = xgb.predict(X_test_xgb)
-xgb_predicted_prob = xgb.predict_proba(X_test_xgb)
+# Run XGBoost metrics
+xgb_pred = xgb_m.predict(X_test_xgb)
+xgb_predicted_prob = xgb_m.predict_proba(X_test_xgb)
 xgb_confidence = confidence_measures(xgb_predicted_prob, X_test_xgb, y_test_xgb, xgb_pred)
+xgb_confidence.to_csv('Plots&Tables/xgb_confidence.csv')
 
 
+# Create figure of accuracy to percent coded
 fig, ax1 = plt.subplots()
 
 color = 'tab:red'
@@ -131,12 +140,73 @@ plt.xticks(np.arange(0, 1.1, .1))
 plt.yticks(np.arange(.9, 1.01, .01))
 plt.axhline(y = 0.95, color = 'black', linestyle = 'dashed')
 ax1.set_ylabel('Accuracy')
-#line1, = ax1.plot(svc_confidence['obs_perc'], svc_confidence['acc'], color='tab:red', label = 'SVC')
-line2, = ax1.plot(rf_confidence['obs_perc'], rf_confidence['acc'], color='tab:blue', label = 'Random Forest')
-#line3, = ax1.plot(xgb_confidence['obs_perc'], xgb_confidence['acc'], color='tab:green', label ='XGBoost')
-ax1.legend(handles=[line2], loc = 4)
+line1, = ax1.plot(svc_confidence['obs_perc'], svc_confidence['acc'], color='tab:green', label = 'SVC', ls = 'dashdot')
+line2, = ax1.plot(rf_confidence['obs_perc'], rf_confidence['acc'], color='tab:blue', label = 'Random Forest', ls = 'solid')
+line3, = ax1.plot(xgb_confidence['obs_perc'], xgb_confidence['acc'], color='tab:red', label ='XGBoost', ls = 'dashed')
+ax1.legend(handles=[line1, line2, line3], loc = 4)
 
-#plt.savefig('MAC_Performance.pdf',bbox_inches='tight')
+plt.savefig('Plots&Tables/MAC_Performance.png',bbox_inches='tight', dpi = 600)
+plt.show()
+
+# Create figure of accuracy to number coded for SVC
+counter = np.arange(0.5,0.96,0.001)
+fig, ax1 = plt.subplots()
+
+color = 'tab:red'
+ax1.set_xlabel('Predicted Probability Threshold')
+ax1.set_ylabel('Accuracy (Solid)', color=color)
+ax1.plot(counter, svc_confidence['acc'], color=color)
+ax1.set_ylim(.89, 1.005)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('Proportion of Observations (Dashed)', color=color)  # we already handled the x-label with ax1
+ax2.plot(counter, svc_confidence['obs']/450, color=color, ls = 'dashed')
+ax2.set_ylim(0, 1.05)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.savefig('Plots&Tables/accuracy.png',bbox_inches='tight', dpi = 600)
+plt.show()
+
+# Create figure of accuracy to number coded for RF
+fig, ax1 = plt.subplots()
+
+color = 'tab:red'
+ax1.set_xlabel('Predicted Probability Threshold')
+ax1.set_ylabel('Accuracy (Solid)', color=color)
+ax1.set_ylim(.9,1.005)
+ax1.plot(counter, rf_confidence['acc'], color=color)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('Proportion of Observations (Dashed)', color=color)  # we already handled the x-label with ax1
+ax2.plot(counter, rf_confidence['obs']/450, color=color, ls = 'dashed')
+ax2.set_ylim(0,1.05)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.savefig('Plots&Tables/rf_accuracy.png',bbox_inches='tight', dpi = 600)
+plt.show()
+
+# Create figure of accuracy to number coded for XGB
+fig, ax1 = plt.subplots()
+
+color = 'tab:red'
+ax1.set_xlabel('Predicted Probability Threshold')
+ax1.set_ylabel('Accuracy (Solid)', color=color)
+ax1.plot(counter, xgb_confidence['acc'], color=color)
+ax1.set_ylim(.9,1.005)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('Number of Observations (Dashed)', color=color)  # we already handled the x-label with ax1
+ax2.plot(counter, xgb_confidence['obs']/450, color=color, ls = 'dashed')
+ax2.set_ylim(0,1.05)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.savefig('Plots&Tables/xgb_accuracy.png',bbox_inches='tight', dpi = 600)
 plt.show()
 
 # Test on full set

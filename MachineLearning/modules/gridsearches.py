@@ -31,7 +31,9 @@ def svc_gridsearch(scores, X_train, y_train):
         print("# Tuning hyper-parameters for %s" % score)
         print()
         clf = GridSearchCV(
-            SVC(class_weight = {0:.1, 1:.9}), tuned_parameters, scoring='%s_macro' % score, cv = 5
+            SVC(class_weight = {0:.24, 1:.76}), tuned_parameters, 
+            scoring=score, cv = 5,
+            n_jobs = -1
             )
         clf.fit(X_train, y_train)
         svc_best_params = clf.best_params_
@@ -42,8 +44,9 @@ def svc_gridsearch(scores, X_train, y_train):
 def svc_gridsearch_sens(score, X_train, y_train):
     print("# Tuning hyper-parameters for %s" % score)
     clf = GridSearchCV(
-        SVC(class_weight = {0:.1, 1:.9}), 
-        tuned_parameters, scoring='%s_macro' % score, cv = 5
+        SVC(class_weight = {0:.24, 1:.76}), 
+        tuned_parameters, scoring=score, cv = 5,
+        n_jobs = -1
         )
     clf.fit(X_train, y_train)
     svc_best_params = clf.best_params_
@@ -64,22 +67,6 @@ min_samples_leaf = [1, 2, 4]
 # Method of selecting samples for training each tree
 bootstrap = [True, False]
 
-'''
-# Random Forest grid searches
-n_estimators = [int(x) for x in np.linspace(start = 200, stop = 1000, num = 5)]
-# Number of features to consider at every split
-max_features = ['auto']
-# Maximum number of levels in tree
-max_depth = [int(x) for x in np.linspace(20, 80, num = 5)]
-max_depth.append(None)
-# Minimum number of samples required to split a node
-min_samples_split = [2, 5, 10]
-# Minimum number of samples required at each leaf node
-min_samples_leaf = [1, 2, 4]
-# Method of selecting samples for training each tree
-bootstrap = [False]
-class_weight =[{0:.14, 1:.86},{0:.12, 1:.88},{0:.1, 1:.9},{0:.08, 1:.92},{0:.06, 1:.94}]
-'''
 random_grid = {'n_estimators': n_estimators,
                'max_features': max_features,
                'max_depth': max_depth,
@@ -197,20 +184,26 @@ space = {
     'alpha': hp.loguniform('alpha', -10, 10),
     'lambda': hp.loguniform('lambda', -10, 10),
     'objective': 'binary:logistic',
-    'eval_metric': 'auc',
     'n_estimators': 1000,
     'reg_alpha' : hp.quniform('reg_alpha', 40,180,1),
     'seed': 123,
-    'scale_pos_weight': hp.uniform('scale_pos_weight',2,5)
+    'scale_pos_weight': hp.uniform('scale_pos_weight',2,9)
 }
 
 
 def xgb_gridsearch(X_train, y_train, X_test, y_test):
     def objective(space):
         clf=xgb.XGBClassifier(
-                        scale_pos_weight=space['scale_pos_weight'], n_estimators =space['n_estimators'], max_depth = int(space['max_depth']), gamma = space['gamma'], early_stopping_rounds=250, eval_metric="auc",
-                        reg_alpha = int(space['reg_alpha']),min_child_weight=int(space['min_child_weight']), 
-                        colsample_bytree=int(space['colsample_bytree']))
+                        scale_pos_weight=space['scale_pos_weight'], 
+                        n_estimators =space['n_estimators'], 
+                        max_depth = int(space['max_depth']), 
+                        gamma = space['gamma'],
+                        reg_alpha = int(space['reg_alpha']),
+                        min_child_weight=int(space['min_child_weight']), 
+                        colsample_bytree=int(space['colsample_bytree']),
+                        n_jobs = -1,
+                        early_stopping_rounds = 50,
+                        eval_metric = "auc")
         
         evaluation = [( X_train, y_train), ( X_test, y_test)]
         
@@ -228,7 +221,7 @@ def xgb_gridsearch(X_train, y_train, X_test, y_test):
     best_hyperparams = fmin(fn = objective,
                             space = space,
                             algo = tpe.suggest,
-                            max_evals = 200,
+                            max_evals = 100,
                             trials = trials)
     best_hyperparams['max_depth'] = round(best_hyperparams['max_depth'])
     return(best_hyperparams)
